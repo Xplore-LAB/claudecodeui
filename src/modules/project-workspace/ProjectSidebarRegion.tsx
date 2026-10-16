@@ -146,7 +146,7 @@ function ProjectSidebarRegion({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex transition-all duration-150 ease-out ${
+      className={`absolute inset-0 z-50 flex transition-all duration-150 ease-out ${
         sidebarOpen ? 'visible opacity-100' : 'invisible opacity-0'
       }`}
     >
@@ -157,7 +157,7 @@ function ProjectSidebarRegion({
         aria-label={t('versionUpdate.ariaLabels.closeSidebar')}
       />
       <div
-        className={`relative h-full w-[85vw] max-w-sm transform border-r border-border/40 bg-card transition-transform duration-150 ease-out sm:w-80 ${
+        className={`relative h-full min-h-0 w-[85vw] max-w-sm transform border-r border-border/40 bg-card pb-safe-area-inset-bottom pt-[env(safe-area-inset-top)] transition-transform duration-150 ease-out sm:w-80 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         onClick={(event) => event.stopPropagation()}

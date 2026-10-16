@@ -175,14 +175,27 @@
     overflow: hidden;
   }
 
-  /* Adjust fixed inset positioning in PWA mode */
-  body.pwa-mode .fixed.inset-0 {
-    top: var(--header-total-padding);
-    left: var(--safe-area-inset-left);
-    right: var(--safe-area-inset-right);
-    bottom: 0;
+  /* The shell owns its safe area; overlays must retain their full backdrop. */
+  .workspace-shell {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
-  
+
+  @media (max-width: 767px), (pointer: coarse) {
+    .chat-composer-shell {
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+    }
+    input:not([type="checkbox"]):not([type="radio"]), textarea, select,
+    .chat-input-placeholder {
+      font-size: 16px !important;
+    }
+    .pwa-menu-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
   /* Global transition defaults */
   button, 
   a, 
