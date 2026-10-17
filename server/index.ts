@@ -112,6 +112,8 @@ createWebSocketServer(server, {
         runtime: providerRuntimeService,
     },
     shell: {
+        resolveAppSessionId: (sessionId) => (sessionsDb.getSessionById(sessionId)
+            ?? sessionsDb.getSessionByProviderSessionId(sessionId))?.session_id ?? sessionId,
         resolveProviderSessionId: (sessionId, provider) => {
             const dbSession = sessionsDb.getSessionById(sessionId);
             if (dbSession) {

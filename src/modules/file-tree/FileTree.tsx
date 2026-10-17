@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 import { AlertTriangle, Check, X, Loader2, Folder, Upload } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
@@ -33,6 +33,8 @@ type FileTreeProps = {
 
 /** Exported through the file-tree barrel; the project-workspace module renders it as the Files sidebar tab. */
 export default function FileTree({ selectedProject, onFileOpen, revealDirectory }: FileTreeProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation();
   const [selectedImage, setSelectedImage] = useState<FileTreeImageSelection | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -312,7 +314,7 @@ export default function FileTree({ selectedProject, onFileOpen, revealDirectory 
               <div>
                 <h3 className="font-medium text-foreground">
                   {t('fileTree.delete.title', 'Delete {{type}}', {
-                    type: operations.deleteConfirmation.item.type === 'directory' ? 'Folder' : 'File'
+                    type: operations.deleteConfirmation.item.type === 'directory' ? tUi('interfaceText.folder_30baa', { defaultValue: "Folder" }) : tUi('interfaceText.file_2c3ca', { defaultValue: "File" })
                   })}
                 </h3>
                 <p className="text-sm text-muted-foreground">

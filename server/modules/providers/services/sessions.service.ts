@@ -3,7 +3,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 
 import { projectsDb, sessionsDb } from '@/modules/database/index.js';
-import { broadcastSessionUpserted, chatRunRegistry } from '@/modules/websocket/index.js';
+import { broadcastSessionUpserted, chatRunRegistry, isAgentTerminalActive } from '@/modules/websocket/index.js';
 import { providerRegistry } from '@/modules/providers/provider.registry.js';
 import { listBusyClaudeCliSessions } from '@/modules/providers/services/claude-cli-liveness.service.js';
 import { sessionHistoryCache } from '@/modules/providers/services/session-history-cache.service.js';
@@ -83,6 +83,7 @@ type SessionDetails = {
   updatedAt: string | null;
   lastActivity: string | null;
   isArchived: boolean;
+  terminalActive: boolean;
   project: {
     projectId: string;
     path: string;
@@ -619,6 +620,7 @@ export const sessionsService = {
       updatedAt: session.updated_at ?? null,
       lastActivity: session.updated_at ?? session.created_at ?? null,
       isArchived: Boolean(session.isArchived),
+      terminalActive: Boolean(projectPath && isAgentTerminalActive(projectPath, session.provider, session.session_id)),
       project: project && projectPath
         ? {
             projectId: project.project_id,

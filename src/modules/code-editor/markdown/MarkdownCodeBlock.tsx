@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { useState } from 'react';
 import type { ComponentProps } from 'react';
 import { oneDark as prismOneDark, oneLight as prismOneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -20,6 +21,8 @@ export default function MarkdownCodeBlock({
   node: _node,
   ...props
 }: MarkdownCodeBlockProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { isDarkMode } = useTheme();
   const [copied, setCopied] = useState(false);
   const rawContent = Array.isArray(children) ? children.join('') : String(children ?? '');
@@ -61,7 +64,7 @@ export default function MarkdownCodeBlock({
           })}
         className="absolute right-2 top-2 z-10 rounded-md border border-border bg-card/90 px-2 py-1 text-xs text-foreground/80 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
       >
-        {copied ? 'Copied!' : 'Copy'}
+        {copied ? tUi('interfaceText.copied_b7c3c', { defaultValue: "Copied!" }) : tUi('interfaceText.copy_af74f', { defaultValue: "Copy" })}
       </button>
 
       <SyntaxHighlighter

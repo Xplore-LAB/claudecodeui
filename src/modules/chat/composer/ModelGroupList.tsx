@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
 
@@ -49,6 +50,8 @@ export default function ModelGroupList({
   onSelect,
   loadingLabel,
 }: ModelGroupListProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const [collapsedKeys, setCollapsedKeys] = useState<string[]>(readCollapsed);
   const collapsed = useMemo(() => new Set(collapsedKeys), [collapsedKeys]);
 
@@ -119,8 +122,7 @@ export default function ModelGroupList({
                 onSelect={() => toggle(group.key)}
                 className="ml-4 border-l border-border/40 pl-4 text-[11px] text-muted-foreground"
               >
-                {group.models.length} hidden — click to show
-              </CommandItem>
+                {group.models.length}{' '}{tUi('interfaceText.hiddenClickToShow_a5a03', { defaultValue: "hidden — click to show" })}</CommandItem>
             ) : null}
 
             {!isCollapsed && group.models.map((model) => {
@@ -137,7 +139,7 @@ export default function ModelGroupList({
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="truncate">{model.label}</span>
                       {model.isCustom && (
-                        <Badge className="h-4 shrink-0 rounded-full px-1.5 text-[8px]">Custom</Badge>
+                        <Badge className="h-4 shrink-0 rounded-full px-1.5 text-[8px]">{tUi('interfaceText.custom_081ae', { defaultValue: "Custom" })}</Badge>
                       )}
                     </div>
                     {model.label !== model.value && (

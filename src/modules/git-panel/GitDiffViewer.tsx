@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 
 type GitDiffViewerProps = {
@@ -30,15 +31,15 @@ function buildDiffPreview(diff: string): DiffPreview {
 
 /** Rendered by the git panel's changes, compare and history views to display one file's diff. */
 export default function GitDiffViewer({ diff, isMobile, wrapText }: GitDiffViewerProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   // Render a bounded preview to keep huge commit diffs from freezing the UI thread.
   const preview = useMemo(() => buildDiffPreview(diff || ''), [diff]);
   const isPreviewTruncated = preview.isCharacterTruncated || preview.isLineTruncated;
 
   if (!diff) {
     return (
-      <div className="p-4 text-center text-sm text-muted-foreground">
-        No diff available
-      </div>
+      <div className="p-4 text-center text-sm text-muted-foreground">{tUi('interfaceText.noDiffAvailable_0e676', { defaultValue: "No diff available" })}</div>
     );
   }
 
@@ -65,9 +66,7 @@ export default function GitDiffViewer({ diff, isMobile, wrapText }: GitDiffViewe
   return (
     <div className="diff-viewer">
       {isPreviewTruncated && (
-        <div className="mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-          Large diff preview: rendering is limited to keep the tab responsive.
-        </div>
+        <div className="mb-2 rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">{tUi('interfaceText.largeDiffPreviewRenderingIsLimitedToKeepThe_2d349', { defaultValue: "Large diff preview: rendering is limited to keep the tab responsive." })}</div>
       )}
       {preview.lines.map((line, index) => renderDiffLine(line, index))}
     </div>

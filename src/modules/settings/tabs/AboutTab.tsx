@@ -1,5 +1,5 @@
 import { Cloud, ExternalLink, MessageSquare, Star, Users } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 
 import { CLOUDCLI_WORDMARK_FONT_FAMILY } from '@/shared/constants';
 import { IS_PLATFORM } from '@/shared/utils';
@@ -29,6 +29,8 @@ function DiscordIcon({ className }: { className?: string }) {
 
 /** Rendered by Settings for the "about" tab, showing version, links and premium upsell cards. */
 export default function AboutTab() {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation('settings');
   const { updateAvailable, latestVersion, currentVersion, releaseInfo } = useVersionCheck('siteboon', 'claudecodeui');
   const releasesUrl = releaseInfo?.htmlUrl || `${GITHUB_REPO_URL}/releases`;
@@ -112,9 +114,7 @@ export default function AboutTab() {
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ExternalLink className="h-3.5 w-3.5" />
-          Docs
-        </a>
+          <ExternalLink className="h-3.5 w-3.5" />{tUi('interfaceText.docs_68a41', { defaultValue: "Docs" })}</a>
         <a
           href={CLOUDCLI_URL}
           target="_blank"

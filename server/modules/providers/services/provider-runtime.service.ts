@@ -1,6 +1,8 @@
 import { providerRegistry } from '@/modules/providers/provider.registry.js';
 import { providerModelsService } from '@/modules/providers/services/provider-models.service.js';
 import { sessionsService } from '@/modules/providers/services/sessions.service.js';
+import { sessionsDb } from '@/modules/database/index.js';
+import { isAgentTerminalActive } from '@/modules/websocket/index.js';
 import type { IProvider } from '@/shared/interfaces.js';
 import type {
   AnyRecord,
@@ -21,6 +23,7 @@ type ProviderRuntimeServiceDependencies = {
     requestedModel?: string | null,
   ): Promise<string | undefined>;
   getProviderModels: typeof providerModelsService.getProviderModels;
+  isTerminalSessionActive(sessionId: string): boolean;
 };
 
 const defaultDependencies: ProviderRuntimeServiceDependencies = {
@@ -30,6 +33,10 @@ const defaultDependencies: ProviderRuntimeServiceDependencies = {
   resolveResumeModel: (provider, sessionId, requestedModel) =>
     providerModelsService.resolveResumeModel(provider, sessionId, requestedModel),
   getProviderModels: (provider) => providerModelsService.getProviderModels(provider),
+  isTerminalSessionActive: (sessionId) => {
+    const session = sessionsDb.getSessionById(sessionId) ?? sessionsDb.getSessionByProviderSessionId(sessionId);
+    return Boolean(session?.project_path && isAgentTerminalActive(session.project_path, session.provider, session.session_id));
+  },
 };
 
 /**
@@ -68,6 +75,9 @@ export function createProviderRuntimeService(
     options: AnyRecord,
     writer: ProviderRuntimeWriter,
   ): Promise<unknown> => {
+    if (options.sessionId && dependencies.isTerminalSessionActive(options.sessionId)) {
+      return Promise.reject(new Error('此会话由共享终端运行。请打开会话页，在原终端中输入；不要启动第二个智能体进程。'));
+    }
     const provider = dependencies.resolveProvider(providerName);
     return provider.runtime.run(command, options, writer, createRuntimeContext(provider));
   };

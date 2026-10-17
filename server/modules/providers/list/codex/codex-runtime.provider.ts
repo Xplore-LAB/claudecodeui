@@ -11,6 +11,8 @@
  * - codexRuntime.abort(sessionId) - Cancel an active session
  */
 
+import { setTimeout as delay } from 'node:timers/promises';
+
 import { Codex } from '@openai/codex-sdk';
 import type { ModelReasoningEffort, Thread, ThreadOptions } from '@openai/codex-sdk';
 
@@ -33,6 +35,10 @@ type ActiveCodexSession = {
 };
 
 const activeCodexSessions = new Map<string, ActiveCodexSession>();
+// Key by native thread so app-session aliases cannot launch competing writers.
+const runningCodexThreads = new Set<string>();
+
+const CODEX_WRITER_CONFLICT_MESSAGE = '此 Codex 会话正在被另一个窗口或进程占用。请先等待当前任务结束；如果在终端中打开过此会话，请在对应终端退出 Codex 后再发送。也可以新建 CloudCLI 对话。This Codex conversation is open in another Codex window or process. Start a new CloudCLI conversation, or close the other Codex session before continuing this one.';
 
 // Codex CLI requires non-whitespace stdin even when --image arguments are
 // present, so attachment-only turns need a small text instruction.
@@ -43,6 +49,34 @@ const CODEX_IMAGE_ONLY_PROMPT = 'Please analyze the attached image(s).';
  * user waits on — a shell command's output, an MCP call, and the running plan.
  */
 const PROGRESSIVE_CODEX_ITEM_TYPES = new Set(['command_execution', 'mcp_tool_call', 'todo_list']);
+
+/** Retries a resume only before Codex emits an event, when no turn has begun. */
+async function* streamCodexEvents(
+  thread: Thread,
+  input: Parameters<Thread['runStreamed']>[0],
+  signal: AbortSignal,
+) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    let receivedEvent = false;
+    try {
+      const streamedTurn = await thread.runStreamed(input, { signal });
+      for await (const event of streamedTurn.events) {
+        receivedEvent = true;
+        yield event;
+      }
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/thread-store conflict|already has an active writer/i.test(message) || receivedEvent || signal.aborted) {
+        throw error;
+      }
+      if (attempt === 3) {
+        throw new Error(CODEX_WRITER_CONFLICT_MESSAGE, { cause: error });
+      }
+      await delay(500 * 2 ** attempt, undefined, { signal });
+    }
+  }
+}
 
 function readUsageNumber(value: unknown) {
   const parsed = Number(value);
@@ -262,6 +296,27 @@ async function queryCodex(
   ws: ProviderRuntimeWriter,
   context: ProviderRuntimeContext,
 ) {
+  const threadKey = context.resolveProviderSessionId(options.sessionId) || options.sessionId;
+  if (threadKey && runningCodexThreads.has(threadKey)) {
+    sendMessage(ws, createNormalizedMessage({ kind: 'error', content: CODEX_WRITER_CONFLICT_MESSAGE, sessionId: options.sessionId || threadKey, provider: 'codex' }));
+    sendMessage(ws, createCompleteMessage({ provider: 'codex', sessionId: options.sessionId || threadKey, exitCode: 1 }));
+    return;
+  }
+  // Acquire before model/catalog awaits, and release only when the SDK exits.
+  if (threadKey) runningCodexThreads.add(threadKey);
+  try {
+    await executeCodexQuery(command, options, ws, context);
+  } finally {
+    if (threadKey) runningCodexThreads.delete(threadKey);
+  }
+}
+
+async function executeCodexQuery(
+  command: string,
+  options: AnyRecord = {},
+  ws: ProviderRuntimeWriter,
+  context: ProviderRuntimeContext,
+) {
   const {
     sessionId,
     sessionSummary,
@@ -352,11 +407,7 @@ async function queryCodex(
     const turnInput = normalizedImages.length > 0
       ? buildCodexInputItems(promptWithImageFallback, normalizedImages, workingDirectory)
       : promptWithFiles;
-    const streamedTurn = await thread.runStreamed(turnInput, {
-      signal: abortController.signal
-    });
-
-    for await (const event of streamedTurn.events) {
+    for await (const event of streamCodexEvents(thread, turnInput, abortController.signal)) {
       // Capture thread/session id lazily from the stream (Codex emits this asynchronously).
       if (event.type === 'thread.started') {
         const discoveredSessionId = event.thread_id || null;

@@ -15,8 +15,13 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Encode Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
-        serif: ['Merriweather', 'Georgia', 'Cambria', '"Times New Roman"', 'serif'],
+        sans: ['var(--font-ui)'],
+        // Existing prose uses font-serif; keep that reading role on the same CJK stack.
+        serif: ['var(--font-ui)'],
+      },
+      fontSize: {
+        xs: ['0.8125rem', { lineHeight: '1.25rem' }],
+        sm: ['0.9375rem', { lineHeight: '1.5rem' }],
       },
       colors: {
         border: "hsl(var(--border))",

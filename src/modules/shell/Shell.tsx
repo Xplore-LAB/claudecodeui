@@ -11,6 +11,7 @@ import { getClaudeSettings } from '@/modules/chat';
 import ShellConnectionOverlay from '@/modules/shell/ShellConnectionOverlay';
 import ShellEmptyState from '@/modules/shell/ShellEmptyState';
 import ShellHeader from '@/modules/shell/ShellHeader';
+import SharedTerminalStatus from '@/modules/shell/SharedTerminalStatus';
 import ShellMinimalView from '@/modules/shell/ShellMinimalView';
 import TerminalShortcutsPanel from '@/modules/shell/TerminalShortcutsPanel';
 
@@ -33,6 +34,7 @@ type ShellProps = {
   onProcessComplete?: ((exitCode: number) => void) | null;
   minimal?: boolean;
   autoConnect?: boolean;
+  persistent?: boolean;
   isActive?: boolean;
 };
 
@@ -45,6 +47,7 @@ export default function Shell({
   onProcessComplete = null,
   minimal = false,
   autoConnect = false,
+  persistent = false,
   isActive = true,
 }: ShellProps) {
   const { t } = useTranslation('chat');
@@ -65,6 +68,7 @@ export default function Shell({
     terminalRef,
     wsRef,
     isConnected,
+    attachCommand,
     isInitialized,
     isConnecting,
     isClaudeThemeOutdated,
@@ -78,6 +82,7 @@ export default function Shell({
     bypassPermissions,
     minimal,
     autoConnect,
+    persistent,
     isRestarting,
     onProcessComplete,
     onOutputRef,
@@ -324,6 +329,10 @@ export default function Shell({
         )}
       />
 
+      {persistent && (
+        <SharedTerminalStatus key={attachCommand} connected={isConnected} connecting={isConnecting} attachCommand={attachCommand} />
+      )}
+
       <div className="relative flex-1 overflow-hidden p-2">
         <div
           ref={terminalContainerRef}
@@ -333,13 +342,14 @@ export default function Shell({
 
         {overlayMode && (
           <ShellConnectionOverlay
+            compact={persistent}
             mode={overlayMode}
             description={overlayDescription}
             loadingLabel={t('shell.loading')}
             connectLabel={t('shell.actions.connect')}
             connectTitle={t('shell.actions.connectTitle')}
             connectingLabel={t('shell.connecting')}
-            onConnect={handleRestartShell}
+            onConnect={() => connectToShell()}
           />
         )}
 

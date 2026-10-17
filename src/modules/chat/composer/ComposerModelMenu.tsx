@@ -59,7 +59,8 @@ function ComposerModelMenu({
     () => (effortOptions.length > 0 ? [{ value: DEFAULT_EFFORT_VALUE }, ...effortOptions] : []),
     [effortOptions],
   );
-  const effortLabel = effort === DEFAULT_EFFORT_VALUE ? defaultEffortLabel : effort;
+  const effortLabel = effort === DEFAULT_EFFORT_VALUE
+    ? defaultEffortLabel : t(`composer.efforts.${effort}`, { defaultValue: effort });
 
   const selectedModelOption = useMemo(
     () => modelOptions.find((option) => option.value === model) ?? null,
@@ -109,7 +110,8 @@ function ComposerModelMenu({
               {resolvedEffortOptions.map((option) => (
                 <ComposerMenuItem
                   key={option.value}
-                  label={option.value === DEFAULT_EFFORT_VALUE ? defaultEffortLabel : option.value}
+                  label={option.value === DEFAULT_EFFORT_VALUE
+                    ? defaultEffortLabel : t(`composer.efforts.${option.value}`, { defaultValue: option.value })}
                   description={option.description}
                   isSelected={option.value === effort}
                   onSelect={() => {

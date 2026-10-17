@@ -6,6 +6,50 @@ import {
 import { IS_PLATFORM } from '@/shared/utils';
 import { readVoiceConfig, voiceConfigHeaders } from '@/shared/voiceConfig';
 
+/** Used at bootstrap to keep all browser transports inside the reverse-proxy mount. */
+export function installDeploymentTransport(basePath: string) {
+  const prefix = basePath.replace(/\/+$/, '');
+  if (!prefix || prefix === '/') return;
+
+  function mountedUrl(input: string | URL): string {
+    const url = new URL(String(input), window.location.href);
+    const localHttp = url.origin === window.location.origin;
+    const localSocket = url.host === window.location.host
+      && url.protocol === (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+    if ((localHttp || localSocket) && url.pathname !== prefix && !url.pathname.startsWith(prefix + '/')) {
+      url.pathname = prefix + url.pathname;
+    }
+    return url.href;
+  }
+
+  // Plugins and upload/search views use native transports as well as the API helpers.
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = (input, options) => {
+    const request = input instanceof Request
+      ? new Request(mountedUrl(input.url), input)
+      : mountedUrl(input);
+    return originalFetch(request, options);
+  };
+  for (const name of ['WebSocket', 'EventSource'] as const) {
+    const constructor = window[name];
+    if (!constructor) continue;
+    Object.defineProperty(window, name, {
+      configurable: true,
+      writable: true,
+      value: new Proxy(constructor, {
+        construct(target, args) {
+          return Reflect.construct(target, [mountedUrl(args[0]), ...args.slice(1)]);
+        },
+      }),
+    });
+  }
+  XMLHttpRequest.prototype.open = new Proxy(XMLHttpRequest.prototype.open, {
+    apply(target, receiver, args) {
+      return Reflect.apply(target, receiver, [args[0], mountedUrl(args[1]), ...args.slice(2)]);
+    },
+  });
+}
+
 // Headers are a plain record rather than the full `HeadersInit` union so the
 // defaults below can be merged with a caller's headers by spreading.
 export type ApiRequestOptions = Omit<RequestInit, 'headers'> & {

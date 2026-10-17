@@ -14,17 +14,28 @@ mapfile -d '' class_files < <(find "$output_dir/classes" -name '*.class' -print0
 "${jdk_bin}java" -cp "${D8_JAR:-$build_tools/lib/d8.jar}" com.android.tools.r8.D8 --min-api 26 --lib "$android_jar" --output "$output_dir/dex" "${class_files[@]}"
 python3 - "$output_dir" <<'PY'
 from pathlib import Path
-from zipfile import ZipFile
-import shutil, sys
+from zipfile import ZipFile, ZIP_STORED
+import shutil, struct, sys
 p = Path(sys.argv[1])
 shutil.copyfile(p / 'resources.apk', p / 'unsigned.apk')
 with ZipFile(p / 'unsigned.apk', 'a') as apk:
     apk.write(p / 'dex/classes.dex', 'classes.dex')
+# Align every uncompressed ZIP entry before signing (Android R+ requires
+# resources.arsc to be stored and aligned even when there are no native libs).
+with ZipFile(p / 'unsigned.apk') as source, ZipFile(p / 'aligned.apk', 'w') as target:
+    for info in source.infolist():
+        if info.filename == 'resources.arsc':
+            info.compress_type = ZIP_STORED
+        if info.compress_type == ZIP_STORED:
+            offset = target.fp.tell() + 30 + len(info.filename.encode('utf-8')) + len(info.extra)
+            padding = (-offset) % 4
+            if padding:
+                info.extra += struct.pack('<HH', 0xd935, padding) + bytes(padding)
+        target.writestr(info, source.read(info.filename))
 PY
 if [[ ! -f "$output_dir/debug.keystore" ]]; then
   "${jdk_bin}keytool" -genkeypair -keystore "$output_dir/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=CloudCLI Local Debug,O=CloudCLI,C=CN'
 fi
-# This shell has no native libraries; apksigner handles its APK alignment requirements.
-"${jdk_bin}java" -jar "$build_tools/lib/apksigner.jar" sign --ks "$output_dir/debug.keystore" --ks-pass pass:android --out "$project_dir/../release/android/cloudcli-debug.apk" "$output_dir/unsigned.apk"
+"${jdk_bin}java" -jar "$build_tools/lib/apksigner.jar" sign --ks "$output_dir/debug.keystore" --ks-pass pass:android --out "$project_dir/../release/android/cloudcli-debug.apk" "$output_dir/aligned.apk"
 "${jdk_bin}java" -jar "$build_tools/lib/apksigner.jar" verify --verbose "$project_dir/../release/android/cloudcli-debug.apk"
 printf 'APK: %s\n' "$project_dir/../release/android/cloudcli-debug.apk"

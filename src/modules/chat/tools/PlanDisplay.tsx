@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 import { ChevronsUpDown, FileText } from 'lucide-react';
 
 import {
@@ -41,6 +41,8 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
   rawContent,
   toolName: _toolName,
 }) => {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation();
   const permissionCtx = usePermission();
 
@@ -76,7 +78,7 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
           </div>
           <CollapsibleTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
             <ChevronsUpDown className="h-4 w-4" />
-            <span className="sr-only">Toggle plan</span>
+            <span className="sr-only">{tUi('interfaceText.togglePlan_846b5', { defaultValue: "Toggle plan" })}</span>
           </CollapsibleTrigger>
         </CardHeader>
 
@@ -90,7 +92,7 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
               />
             ) : isStreaming ? (
               <div className="py-2">
-                <Shimmer>Generating plan...</Shimmer>
+                <Shimmer>{tUi('interfaceText.generatingPlan_24bcc', { defaultValue: "Generating plan..." })}</Shimmer>
               </div>
             ) : null}
 
@@ -104,9 +106,7 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                  raw params
-                </CollapsibleTrigger>
+                  </svg>{tUi('interfaceText.rawParams_f0c42', { defaultValue: "raw params" })}</CollapsibleTrigger>
                 <CollapsibleContent>
                   <pre className="mt-1 overflow-hidden whitespace-pre-wrap break-words rounded border border-border/40 bg-muted p-2 font-mono text-[11px] text-muted-foreground">
                     {rawContent}
@@ -125,11 +125,8 @@ export const PlanDisplay: React.FC<PlanDisplayProps> = ({
               size="sm"
               onClick={handleRevise}
               className="text-muted-foreground"
-            >
-              Revise
-            </Button>
-            <Button size="sm" onClick={handleBuild}>
-              Build{' '}
+            >{tUi('interfaceText.revise_b4503', { defaultValue: "Revise" })}</Button>
+            <Button size="sm" onClick={handleBuild}>{tUi('interfaceText.build_bbd80', { defaultValue: "Build" })}{' '}
               <kbd className="ml-1 rounded bg-primary-foreground/20 px-1 py-0.5 font-mono text-[10px]">
                 ⌘↩
               </kbd>

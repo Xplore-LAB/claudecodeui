@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 
 import { useGitSettings } from '@/modules/settings/hooks/useGitSettings';
 import { Button, Input } from '@/shared/ui';
@@ -8,6 +8,8 @@ import SettingsSection from '@/modules/settings/SettingsSection';
 
 /** Rendered by Settings for the "git" tab, configuring the commit identity and git preferences. */
 export default function GitSettingsTab() {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation('settings');
   const {
     gitName,
@@ -37,7 +39,7 @@ export default function GitSettingsTab() {
                 type="text"
                 value={gitName}
                 onChange={(event) => setGitName(event.target.value)}
-                placeholder="John Doe"
+                placeholder={tUi('interfaceText.johnDoe_ae6e4', { defaultValue: "John Doe" })}
                 disabled={isLoading}
                 className="w-full"
               />

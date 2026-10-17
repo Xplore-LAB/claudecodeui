@@ -40,7 +40,7 @@ export const PromptInput = React.forwardRef<HTMLFormElement, PromptInputProps>(
           ref={ref}
           data-slot="prompt-input"
           className={cn(
-            'relative overflow-hidden rounded-xl border border-border/50 bg-card/80 shadow-sm backdrop-blur-sm transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-md focus-within:ring-1 focus-within:ring-primary/15',
+            'relative overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-lg shadow-black/[0.035] transition-all duration-200 focus-within:border-primary/35 focus-within:shadow-xl focus-within:shadow-primary/5 focus-within:ring-2 focus-within:ring-primary/10',
             className
           )}
           {...props}
@@ -114,7 +114,7 @@ export const PromptInputFooter = React.forwardRef<
   <div
     ref={ref}
     data-slot="prompt-input-footer"
-    className={cn('flex items-center justify-between border-t border-border/30 px-3 py-2', className)}
+    className={cn('flex items-center justify-between border-t border-border/20 bg-muted/20 px-2 py-2 sm:px-3', className)}
     {...props}
   />
 ));
@@ -157,7 +157,7 @@ export const PromptInputButton = React.forwardRef<HTMLButtonElement, PromptInput
         type="button"
         variant="ghost"
         size="icon"
-        className={cn('h-8 w-8 [&_svg]:size-4', className)}
+        className={cn('h-9 w-9 rounded-xl [&_svg]:size-4', className)}
         {...props}
       >
         {children}
@@ -206,7 +206,7 @@ export const PromptInputSubmit = React.forwardRef<HTMLButtonElement, PromptInput
         type={isActive ? 'button' : 'submit'}
         variant="default"
         size="icon"
-        className={cn('h-8 w-8 shrink-0 rounded-lg', className)}
+        className={cn('h-10 w-10 shrink-0 rounded-xl shadow-sm shadow-primary/20', className)}
         {...props}
       >
         {children ?? (isActive ? (

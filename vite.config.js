@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
   const serverPort = env.SERVER_PORT || env.PORT || 3001
 
   return {
+    base: env.VITE_BASE_PATH || '/',
     plugins: [react()],
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version)

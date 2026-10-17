@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { memo } from 'react';
 import {
   AlertCircle,
@@ -134,6 +135,8 @@ function getSubtaskProgress(task: TaskMasterTask): { completed: number; total: n
 
 /** Rendered by TaskBoardContent for one task tile, showing its status, priority and subtask progress. */
 function TaskCard({ task, onClick = null, showParent = false, className = '' }: TaskCardProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const statusStyle = getStatusStyle(task.status);
   const progress = getSubtaskProgress(task);
 
@@ -162,7 +165,7 @@ function TaskCard({ task, onClick = null, showParent = false, className = '' }: 
           </h3>
 
           {showParent && task.parentId && (
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Task {task.parentId}</span>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{tUi('interfaceText.task_7bb0d', { defaultValue: "Task" })}{' '}{task.parentId}</span>
           )}
         </div>
 
@@ -175,7 +178,7 @@ function TaskCard({ task, onClick = null, showParent = false, className = '' }: 
             <Tooltip content={`Depends on: ${task.dependencies.map((dependency) => `Task ${dependency}`).join(', ')}`}>
               <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                 <ArrowRight className="h-3 w-3" />
-                <span>Depends on: {task.dependencies.join(', ')}</span>
+                <span>{tUi('interfaceText.dependsOn_3217f', { defaultValue: "Depends on:" })}{' '}{task.dependencies.join(', ')}</span>
               </div>
             </Tooltip>
           )}
@@ -192,7 +195,7 @@ function TaskCard({ task, onClick = null, showParent = false, className = '' }: 
       {progress.total > 0 && (
         <div className="ml-3">
           <div className="mb-1 flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Progress:</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{tUi('interfaceText.progress_04866', { defaultValue: "Progress:" })}</span>
             <div className="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700" title={`${progress.completed} of ${progress.total} subtasks completed`}>
               <div
                 className={cn('h-full rounded-full transition-all duration-300', task.status === 'done' ? 'bg-green-500' : 'bg-blue-500')}

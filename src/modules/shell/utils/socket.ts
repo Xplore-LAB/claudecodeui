@@ -12,6 +12,7 @@ type ShellInitMessage = {
   initialCommand: string | null | undefined;
   isPlainShell: boolean;
   forceRestart?: boolean;
+  persistent?: boolean;
   bypassPermissions?: boolean;
   // The app theme at launch, so the server can start a CLI in the colour scheme
   // the terminal is painted in.

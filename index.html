@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -7,13 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <title>CloudCLI UI</title>
 
-    <!-- Fonts: Encode Sans (UI) + Merriweather (chat) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Encode+Sans:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Use the device's system fonts for consistent Chinese and Latin text. -->
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" crossorigin="use-credentials"  />
@@ -40,7 +34,7 @@
     
     <!-- Service Worker Registration -->
     <script>
-      if ('serviceWorker' in navigator) {
+      if ('%BASE_URL%' === '/' && 'serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {

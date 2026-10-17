@@ -21,6 +21,7 @@ export default defineConfig({
     // token. The tests that care stub it per case and assert both modes.
     env: {
       VITE_IS_PLATFORM: 'false',
+      VITE_DEFAULT_LANGUAGE: 'en',
     },
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],

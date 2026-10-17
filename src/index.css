@@ -23,6 +23,7 @@
 
 @layer base {
   :root {
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "WenQuanYi Micro Hei", Arial, sans-serif;
     --background: 44 22% 96%;
     --foreground: 36 25% 4%;
     --card: 0 0% 100%;
@@ -129,9 +130,9 @@
   body {
     @apply bg-background text-foreground;
 
-    font-family: "Encode Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
     margin: 0;
     padding: 0;
   }
@@ -249,6 +250,12 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Give Chinese prose room to breathe without changing code/editor typography. */
+.chat-message .prose {
+  font-size: 1rem;
+  line-height: 1.85;
 }
 
 @layer utilities {

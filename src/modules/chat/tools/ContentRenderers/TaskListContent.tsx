@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import React from 'react';
 
 type TaskItem = {
@@ -73,6 +74,8 @@ const statusConfig = {
  * Rendered by chat's ToolRenderer as the content of a task-list tool result.
  */
 export const TaskListContent: React.FC<TaskListContentProps> = ({ content }) => {
+  const { t: tUi } = useUiTranslation('common');
+
   const tasks = parseTaskContent(content);
 
   // If we couldn't parse any tasks, fall back to text display
@@ -91,8 +94,7 @@ export const TaskListContent: React.FC<TaskListContentProps> = ({ content }) => 
     <div>
       <div className="mb-1.5 flex items-center gap-2">
         <span className="text-[11px] text-gray-500 dark:text-gray-400">
-          {completed}/{total} completed
-        </span>
+          {completed}/{total}{' '}{tUi('interfaceText.completed_231e5', { defaultValue: "completed" })}</span>
         <div className="h-1 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
           <div
             className="h-full rounded-full bg-green-500 transition-all dark:bg-green-400"

@@ -5,6 +5,8 @@ import path from 'node:path';
 import pty, { type IPty } from 'node-pty';
 import { WebSocket, type RawData } from 'ws';
 
+import { buildPersistentTerminalLaunch } from '@/modules/websocket/services/persistent-terminal.service.js';
+import { chatRunRegistry } from '@/modules/websocket/services/chat-run-registry.service.js';
 import { parseIncomingJsonObject, stripAnsiSequences } from '@/shared/utils.js';
 
 type ShellIncomingMessage = {
@@ -19,6 +21,7 @@ type ShellIncomingMessage = {
   initialCommand?: string;
   isPlainShell?: boolean;
   forceRestart?: boolean;
+  persistent?: boolean;
   bypassPermissions?: boolean;
   colorScheme?: string;
 };
@@ -27,7 +30,10 @@ type ShellColorScheme = 'light' | 'dark';
 
 type PtySessionEntry = {
   pty: IPty;
-  ws: WebSocket | null;
+  clients: Set<WebSocket>;
+  sizes: Map<WebSocket, { cols: number; rows: number }>;
+  persistent: boolean;
+  attachCommand?: string;
   buffer: string[];
   timeoutId: NodeJS.Timeout | null;
   projectPath: string;
@@ -37,6 +43,22 @@ type PtySessionEntry = {
   // client needs this, not its own current theme, to know if they differ.
   claudeColorScheme: ShellColorScheme | null;
 };
+
+// All attached devices observe the same PTY; one failed socket cannot stop the others.
+function broadcastTerminalFrame(clients: Set<WebSocket>, frame: string): void {
+  for (const client of clients) {
+    if (client.readyState !== WebSocket.OPEN) continue;
+    try { client.send(frame); } catch { client.terminate(); }
+  }
+}
+
+function fitSharedTerminal(session: PtySessionEntry): void {
+  if (session.sizes.size === 0) return;
+  session.pty.resize(
+    Math.min(...Array.from(session.sizes.values(), (size) => size.cols)),
+    Math.min(...Array.from(session.sizes.values(), (size) => size.rows)),
+  );
+}
 
 const ptySessionsMap = new Map<string, PtySessionEntry>();
 const PTY_SESSION_TIMEOUT = 30 * 60 * 1000;
@@ -120,6 +142,7 @@ type ShellWebSocketDependencies = {
     provider: string,
   ) => string | null | undefined;
   spawnPty?: typeof pty.spawn;
+  resolveAppSessionId?: (sessionId: string) => string;
 };
 
 /**
@@ -223,7 +246,7 @@ function buildShellCommand(
   const otherProgram = (command: string): ShellLaunch => ({ command, claudeFollowsAppTheme: false });
 
   if (isPlainShell) {
-    return otherProgram(initialCommand);
+    return otherProgram(initialCommand || (os.platform() === 'win32' ? 'powershell.exe' : 'exec bash -l'));
   }
 
   if (provider === 'cursor') {
@@ -235,6 +258,7 @@ function buildShellCommand(
 
   if (provider === 'codex') {
     if (resumeSessionId) {
+      if (readBoolean(message.persistent)) return otherProgram(`codex resume "${resumeSessionId}"`);
       if (os.platform() === 'win32') {
         return otherProgram(`codex resume "${resumeSessionId}"; if ($LASTEXITCODE -ne 0) { codex }`);
       }
@@ -259,6 +283,9 @@ function buildShellCommand(
   const theme = buildClaudeThemeLaunch(readColorScheme(message.colorScheme), projectPath);
   const launchFlags = `${bypassFlag}${theme.flag}`;
   if (resumeSessionId) {
+    if (readBoolean(message.persistent)) {
+      return { command: `claude --resume "${resumeSessionId}"${launchFlags}`, claudeFollowsAppTheme: theme.followsAppTheme };
+    }
     const command = os.platform() === 'win32'
       ? `claude --resume "${resumeSessionId}"${launchFlags}; if ($LASTEXITCODE -ne 0) { claude${launchFlags} }`
       : `claude --resume "${resumeSessionId}"${launchFlags} || claude${launchFlags}`;
@@ -268,7 +295,9 @@ function buildShellCommand(
     // A caller's own command (e.g. `claude /login`) is launched as given.
     return otherProgram(initialCommand);
   }
-  return { command: `claude${launchFlags}`, claudeFollowsAppTheme: theme.followsAppTheme };
+  const newSessionFlag = readBoolean(message.persistent) && /^[a-f0-9-]{36}$/i.test(readString(message.sessionId))
+    ? ` --session-id ${quoteShellArgument(readString(message.sessionId))}` : '';
+  return { command: `claude${newSessionFlag}${launchFlags}`, claudeFollowsAppTheme: theme.followsAppTheme };
 }
 
 // Claude Code's built-in theme ids (the `/theme` picker of CLI 2.1.280). A
@@ -546,7 +575,8 @@ export function handleShellConnection(
       }
 
       if (data.type === 'init') {
-        const projectPath = readString(data.projectPath, process.cwd());
+        if (ptySessionKey) throw new Error('Terminal is already initialized on this connection');
+        const projectPath = path.resolve(readString(data.projectPath, process.cwd()));
         const sessionId = readString(data.sessionId) || null;
         const hasSession = readBoolean(data.hasSession);
         const provider = readString(data.provider, 'claude');
@@ -571,13 +601,21 @@ export function handleShellConnection(
           isPlainShell && initialCommand
             ? `_cmd_${Buffer.from(initialCommand).toString('base64').slice(0, 16)}`
             : '';
-        ptySessionKey = `${projectPath}_${sessionId ?? 'default'}${commandSuffix}`;
+        const persistent = readBoolean(data.persistent) && !isPlainShell && os.platform() !== 'win32';
+        const resumeId = resolveResumeSessionId(data, dependencies);
+        // Native ids unify app aliases; providers and plain shells never collide.
+        const terminalId = sessionId && dependencies.resolveAppSessionId
+          ? dependencies.resolveAppSessionId(sessionId) : resumeId || sessionId || 'default';
+        ptySessionKey = JSON.stringify([projectPath, isPlainShell ? 'plain-shell' : provider, terminalId, commandSuffix]);
 
         if (isLoginCommand || forceRestart) {
           const oldSession = ptySessionsMap.get(ptySessionKey);
           if (oldSession) {
             if (oldSession.timeoutId) {
               clearTimeout(oldSession.timeoutId);
+            }
+            for (const client of oldSession.clients) {
+              if (client.readyState === WebSocket.OPEN) client.close(1012, 'Terminal restarting');
             }
             oldSession.pty.kill();
             ptySessionsMap.delete(ptySessionKey);
@@ -611,8 +649,16 @@ export function handleShellConnection(
             });
           }
 
-          existingSession.ws = ws;
+          existingSession.clients.add(ws);
+          existingSession.sizes.set(ws, { cols: Math.max(2, readNumber(data.cols, 80)), rows: Math.max(2, readNumber(data.rows, 24)) });
+          fitSharedTerminal(existingSession);
+          if (existingSession.attachCommand) ws.send(JSON.stringify({ type: 'terminal_session', attachCommand: existingSession.attachCommand }));
           sendClaudeColorScheme(ws, existingSession.claudeColorScheme);
+          return;
+        }
+
+        if (!isPlainShell && chatRunRegistry.getRun(terminalId)?.status === 'running') {
+          ws.send(JSON.stringify({ type: 'error', message: '此会话正在聊天页执行任务。请等任务结束后再连接实时终端，避免同时启动两个进程。' }));
           return;
         }
 
@@ -643,11 +689,20 @@ export function handleShellConnection(
         const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
         const shellArgs =
           os.platform() === 'win32' ? ['-Command', shellCommand] : ['-c', shellCommand];
-        const termCols = readNumber(data.cols, 80);
-        const termRows = readNumber(data.rows, 24);
+        const termCols = Math.max(2, Math.min(500, readNumber(data.cols, 80)));
+        const termRows = Math.max(2, Math.min(300, readNumber(data.rows, 24)));
         const prioritizedPath = prioritizeUserNpmGlobalBin(process.env);
 
-        shellProcess = (dependencies.spawnPty ?? pty.spawn)(shell, shellArgs, {
+        const persistentLaunch = persistent ? buildPersistentTerminalLaunch({
+          key: ptySessionKey, command: shellCommand, cwd: resolvedProjectPath,
+          cols: termCols, rows: termRows, restart: forceRestart,
+          environment: {
+            PATH: prioritizedPath.value || process.env.PATH || '',
+            ...(provider === 'codex' && sessionId ? { CODEX_INTERNAL_ORIGINATOR_OVERRIDE: `cloudcli-terminal:${sessionId}` } : {}),
+            ...(colorScheme ? { COLORFGBG: colorScheme === 'light' ? '0;15' : '15;0' } : {}),
+          },
+        }) : null;
+        shellProcess = (dependencies.spawnPty ?? pty.spawn)(persistentLaunch ? 'tmux' : shell, persistentLaunch?.args || shellArgs, {
           name: 'xterm-256color',
           cols: termCols,
           rows: termRows,
@@ -667,7 +722,10 @@ export function handleShellConnection(
 
         ptySessionsMap.set(ptySessionKey, {
           pty: shellProcess,
-          ws,
+          clients: new Set([ws]),
+          sizes: new Map([[ws, { cols: termCols, rows: termRows }]]),
+          persistent,
+          attachCommand: persistentLaunch?.attachCommand,
           buffer: [],
           timeoutId: null,
           projectPath,
@@ -675,13 +733,17 @@ export function handleShellConnection(
           claudeColorScheme,
         });
 
+        if (persistentLaunch) ws.send(JSON.stringify({ type: 'terminal_session', attachCommand: persistentLaunch.attachCommand }));
+
+        const ownedProcess = shellProcess;
+        const ownedSessionKey = ptySessionKey;
         shellProcess.onData((chunk) => {
           if (!ptySessionKey) {
             return;
           }
 
           const session = ptySessionsMap.get(ptySessionKey);
-          if (!session) {
+          if (!session || session.pty !== ownedProcess) {
             return;
           }
 
@@ -692,7 +754,7 @@ export function handleShellConnection(
             session.buffer.push(chunk);
           }
 
-          if (session.ws && session.ws.readyState === WebSocket.OPEN) {
+          if (session.clients.size > 0) {
             let outputData = chunk;
             const cleanChunk = stripAnsiSequences(chunk);
             urlDetectionBuffer = `${urlDetectionBuffer}${cleanChunk}`.slice(-SHELL_URL_PARSE_BUFFER_LIMIT);
@@ -711,7 +773,7 @@ export function handleShellConnection(
               const isNewUrl = !announcedAuthUrls.has(normalizedUrl);
               if (isNewUrl) {
                 announcedAuthUrls.add(normalizedUrl);
-                session.ws?.send(
+                broadcastTerminalFrame(session.clients,
                   JSON.stringify({
                     type: 'auth_url',
                     url: normalizedUrl,
@@ -742,7 +804,7 @@ export function handleShellConnection(
               emitAuthUrl(bestUrl, true);
             }
 
-            session.ws.send(
+            broadcastTerminalFrame(session.clients,
               JSON.stringify({
                 type: 'output',
                 data: outputData,
@@ -757,12 +819,12 @@ export function handleShellConnection(
           }
 
           const session = ptySessionsMap.get(ptySessionKey);
-          if (session && session.pty !== shellProcess) {
+          if (!session || session.pty !== ownedProcess) {
             return;
           }
 
-          if (session && session.ws && session.ws.readyState === WebSocket.OPEN) {
-            session.ws.send(
+          if (session.clients.size > 0) {
+            broadcastTerminalFrame(session.clients,
               JSON.stringify({
                 type: 'output',
                 data: `\r\n\x1b[33mProcess exited with code ${exitCode.exitCode}${
@@ -776,7 +838,7 @@ export function handleShellConnection(
             clearTimeout(session.timeoutId);
           }
 
-          ptySessionsMap.delete(ptySessionKey);
+          ptySessionsMap.delete(ownedSessionKey);
           shellProcess = null;
         });
 
@@ -813,8 +875,13 @@ export function handleShellConnection(
       }
 
       if (data.type === 'resize') {
-        if (shellProcess) {
-          shellProcess.resize(readNumber(data.cols, 80), readNumber(data.rows, 24));
+        const session = ptySessionKey ? ptySessionsMap.get(ptySessionKey) : null;
+        if (session?.clients.has(ws)) {
+          session.sizes.set(ws, {
+            cols: Math.max(2, Math.min(500, readNumber(data.cols, 80))),
+            rows: Math.max(2, Math.min(300, readNumber(data.rows, 24))),
+          });
+          fitSharedTerminal(session);
         }
       }
     } catch (error) {
@@ -841,20 +908,17 @@ export function handleShellConnection(
       return;
     }
 
-    // Mobile networks can deliver an old socket's close after its replacement
-    // has attached. Only the socket that currently owns the PTY may detach it.
-    if (session.ws !== ws) {
-      return;
-    }
-
-    session.ws = null;
+    session.clients.delete(ws);
+    session.sizes.delete(ws);
+    fitSharedTerminal(session);
+    if (session.clients.size > 0 || session.persistent) return;
     if (session.timeoutId) {
       clearTimeout(session.timeoutId);
     }
     session.timeoutId = setTimeout(() => {
       // A reconnect may win just as this timer becomes runnable. Re-check the
       // active socket so a queued cleanup can never kill a reattached PTY.
-      if (ptySessionsMap.get(ptySessionKey as string) !== session || session.ws !== null) {
+      if (ptySessionsMap.get(ptySessionKey as string) !== session || session.clients.size > 0) {
         return;
       }
 
@@ -865,5 +929,8 @@ export function handleShellConnection(
 
   ws.on('error', (error) => {
     console.error('[ERROR] Shell WebSocket error:', error);
+    // Invalid frames (including reserved close code 1006) cannot be repaired.
+    // Force close so the client reconnects; the close handler retains its PTY.
+    ws.terminate();
   });
 }

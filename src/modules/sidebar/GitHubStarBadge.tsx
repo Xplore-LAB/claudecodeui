@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { Star, X } from 'lucide-react';
 
 import { useGitHubStars } from '@/modules/sidebar/hooks/useGitHubStars';
@@ -15,6 +16,8 @@ function GitHubIcon({ className }: { className?: string }) {
 
 /** Rendered by SidebarHeader on self-hosted (non-platform) builds to link to the GitHub repo with its star count. */
 export default function GitHubStarBadge() {
+  const { t: tUi } = useUiTranslation('common');
+
   const { formattedCount, isDismissed, dismiss } = useGitHubStars('siteboon', 'claudecodeui');
 
   if (IS_PLATFORM || isDismissed) return null;
@@ -29,7 +32,7 @@ export default function GitHubStarBadge() {
       >
         <GitHubIcon className="h-3.5 w-3.5" />
         <Star className="h-3 w-3" />
-        <span className="font-normal">Star</span>
+        <span className="font-normal">{tUi('interfaceText.star_85a7d', { defaultValue: "Star" })}</span>
         {formattedCount && (
           <span className="border-l border-border/50 pl-1.5 tabular-nums">{formattedCount}</span>
         )}
@@ -41,7 +44,7 @@ export default function GitHubStarBadge() {
           dismiss();
         }}
         className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full border border-border/50 bg-muted text-muted-foreground transition-colors hover:text-foreground group-hover/star:flex"
-        aria-label="Dismiss"
+        aria-label={tUi('interfaceText.dismiss_70afe', { defaultValue: "Dismiss" })}
       >
         <X className="h-2.5 w-2.5" />
       </button>

@@ -160,3 +160,22 @@ test('clearing the composer clears that session\'s stored draft', async () => {
 
   assert.equal(readDraftText('session-a'), '');
 });
+
+test('voice appends to the current draft without sending it', async () => {
+  const view = renderComposer({ id: 'session-a' });
+  await act(async () => view.result.current.setInput('existing draft'));
+  await act(async () => view.result.current.handleVoiceTranscript('dictated words', false));
+  assert.equal(view.result.current.input, 'existing draft dictated words');
+  assert.equal(readDraftText('session-a'), 'existing draft dictated words');
+});
+
+test('a voice result from the previous session cannot change the current draft', async () => {
+  const view = renderComposer({ id: 'session-a' });
+  await act(async () => view.result.current.setInput('for session A'));
+  const oldTranscript = view.result.current.handleVoiceTranscript;
+  await act(async () => view.rerender({ session: { id: 'session-b' } }));
+  await act(async () => view.result.current.setInput('for session B'));
+  await act(async () => oldTranscript('late speech', true));
+  assert.equal(view.result.current.input, 'for session B');
+  assert.equal(readDraftText('session-a'), 'for session A');
+});

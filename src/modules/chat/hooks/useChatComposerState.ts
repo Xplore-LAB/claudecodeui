@@ -1042,12 +1042,14 @@ export function useChatComposerState({
   // user tapped "stop and send", is submitted straight away. Mirror the value into
   // inputValueRef synchronously so handleSubmit reads the new text, not the stale state.
   const handleVoiceTranscript = useCallback((text: string, send?: boolean) => {
+    // Discard late speech after a project/session switch instead of changing the new draft.
+    if (draftScopeRef.current !== draftScope) return;
     const base = inputValueRef.current.trim();
     const next = base ? `${base} ${text}` : text;
     setInput(next);
     inputValueRef.current = next;
     if (send) handleSubmitRef.current?.(createFakeSubmitEvent());
-  }, [setInput]);
+  }, [draftScope, setInput]);
 
   useEffect(() => {
     inputValueRef.current = input;

@@ -234,6 +234,8 @@ function spawnRecorder(resumeSessionId: string | null = null) {
   const calls: SpawnCall[] = [];
   const dependencies = {
     resolveProviderSessionId: () => resumeSessionId,
+    // Launch fixtures are independent app rows even when their fake native id is shared.
+    resolveAppSessionId: (id: string) => id,
     spawnPty: (shell: string, args: string | string[], options?: { env?: Record<string, string | undefined> }) => {
       calls.push({
         shell,
@@ -745,4 +747,114 @@ test('other shells and initial commands only get the COLORFGBG hint', () => {
       ['0;15', '0;15', '0;15', '15;0']
     );
   });
+});
+
+test('a protocol error terminates the transport while retaining the PTY for reconnect', () => {
+  const pty = createFakePty();
+  const dependencies = {
+    resolveProviderSessionId: () => null,
+    spawnPty: () => pty as never,
+  };
+  const init = JSON.stringify({
+    type: 'init', projectPath: process.cwd(),
+    sessionId: `protocol-error-${Date.now()}`, provider: 'plain-shell',
+    isPlainShell: true, initialCommand: 'test-command',
+  });
+  const socket = Object.assign(createFakeSocket(), {
+    terminated: false,
+    terminate() {
+      socket.terminated = true;
+      socket.readyState = WebSocket.CLOSED;
+      socket.emit('close');
+    },
+  });
+  handleShellConnection(socket as never, dependencies);
+  socket.emit('message', init);
+  socket.emit('error', new RangeError('Invalid WebSocket frame: invalid status code 1006'));
+  assert.equal(socket.terminated, true);
+  assert.equal(pty.killed, false);
+  const replacement = createFakeSocket();
+  handleShellConnection(replacement as never, dependencies);
+  replacement.emit('message', init);
+  replacement.frames.length = 0;
+  pty.emitData('reconnected-output');
+  assert.ok(replacement.frames.some((frame) => frame.includes('reconnected-output')));
+  pty.emitExit();
+});
+
+test('web and mobile share one terminal, receive live output, and can both send input', () => {
+  const pty = createFakePty();
+  const inputs: string[] = [];
+  pty.write = (data?: string) => { if (data) inputs.push(data); };
+  let spawns = 0;
+  const dependencies = {
+    resolveProviderSessionId: () => 'shared-provider-session',
+    spawnPty: () => { spawns += 1; return pty as never; },
+  };
+  const init = JSON.stringify({ type: 'init', projectPath: process.cwd(),
+    sessionId: 'shared-remote-terminal', hasSession: true, provider: 'codex' });
+  const web = createFakeSocket();
+  const mobile = createFakeSocket();
+  handleShellConnection(web as never, dependencies);
+  handleShellConnection(mobile as never, dependencies);
+  web.emit('message', init);
+  mobile.emit('message', init);
+  web.frames.length = mobile.frames.length = 0;
+  pty.emitData('same-live-progress');
+  assert.equal(spawns, 1);
+  for (const socket of [web, mobile]) {
+    assert.ok(socket.frames.some((frame) => frame.includes('same-live-progress')));
+    socket.emit('message', JSON.stringify({ type: 'input', data: 'hello\r' }));
+  }
+  assert.deepEqual(inputs, ['hello\r', 'hello\r']);
+  mobile.emit('close');
+  pty.emitData('still-live-in-web');
+  assert.equal(pty.killed, false);
+  assert.ok(web.frames.some((frame) => frame.includes('still-live-in-web')));
+  pty.emitExit();
+});
+
+test('persistent terminal reconnect reuses the same PTY after all clients disconnect', () => {
+  const pty = createFakePty();
+  let spawns = 0;
+  const dependencies = {
+    resolveProviderSessionId: () => null,
+    resolveAppSessionId: () => 'persistent-app-id',
+    spawnPty: (command: string) => {
+      assert.equal(command, 'tmux');
+      spawns += 1;
+      return pty as never;
+    },
+  };
+  const init = JSON.stringify({ type: 'init', projectPath: process.cwd(),
+    sessionId: 'persistent-app-id', provider: 'codex', persistent: true });
+  const first = createFakeSocket();
+  handleShellConnection(first as never, dependencies);
+  first.emit('message', init);
+  first.emit('close');
+  pty.emitData('completed-while-disconnected');
+  const second = createFakeSocket();
+  handleShellConnection(second as never, dependencies);
+  second.emit('message', init);
+  assert.equal(spawns, 1);
+  assert.equal(pty.killed, false);
+  assert.ok(second.frames.some((frame) => frame.includes('completed-while-disconnected')));
+  assert.ok(second.frames.some((frame) => frame.includes('attach-session')));
+  pty.emitExit();
+});
+
+test('provider terminals and the plain command shell cannot collide', () => {
+  const processes: ReturnType<typeof createFakePty>[] = [];
+  const dependencies = {
+    resolveProviderSessionId: () => null,
+    spawnPty: () => { const pty = createFakePty(); processes.push(pty); return pty as never; },
+  };
+  for (const provider of ['codex', 'claude', 'plain-shell']) {
+    const socket = createFakeSocket();
+    handleShellConnection(socket as never, dependencies);
+    socket.emit('message', JSON.stringify({ type: 'init', projectPath: process.cwd(),
+      sessionId: 'provider-isolation', provider }));
+  }
+  assert.equal(processes.length, 3);
+  processes.forEach((pty) => pty.emitExit());
 });

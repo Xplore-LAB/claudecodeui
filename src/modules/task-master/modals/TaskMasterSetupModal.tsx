@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Terminal } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 
 import { cn } from '@/shared/utils';
 import { Shell } from '@/modules/shell';
@@ -15,6 +15,8 @@ type TaskMasterSetupModalProps = {
 
 /** Rendered by TaskBoard and NextTaskBanner to run TaskMaster initialisation for a project in an embedded shell. */
 export default function TaskMasterSetupModal({ isOpen, project, onClose, onAfterClose = null }: TaskMasterSetupModalProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation('tasks');
   const [isTaskMasterComplete, setIsTaskMasterComplete] = useState(false);
 
@@ -49,7 +51,7 @@ export default function TaskMasterSetupModal({ isOpen, project, onClose, onAfter
           <button
             onClick={closeModal}
             className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-            title="Close"
+            title={tUi('interfaceText.close_bbfa7', { defaultValue: "Close" })}
           >
             <Plus className="h-5 w-5 rotate-45" />
           </button>

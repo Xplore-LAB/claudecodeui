@@ -16,6 +16,7 @@ type UseShellRuntimeOptions = {
   bypassPermissions: boolean;
   minimal: boolean;
   autoConnect: boolean;
+  persistent?: boolean;
   isRestarting: boolean;
   onProcessComplete?: ((exitCode: number) => void) | null;
   onOutputRef?: MutableRefObject<(() => void) | null>;
@@ -26,6 +27,7 @@ type UseShellRuntimeResult = {
   terminalRef: MutableRefObject<Terminal | null>;
   wsRef: MutableRefObject<WebSocket | null>;
   isConnected: boolean;
+  attachCommand: string | null;
   isInitialized: boolean;
   isConnecting: boolean;
   // A live Claude CLI was launched in the other theme and keeps those colours
@@ -43,6 +45,7 @@ export function useShellRuntime({
   bypassPermissions,
   minimal,
   autoConnect,
+  persistent = false,
   isRestarting,
   onProcessComplete,
   onOutputRef,
@@ -104,6 +107,7 @@ export function useShellRuntime({
     isConnected,
     isConnecting,
     claudeLaunchColorScheme,
+    attachCommand,
     connectToShell,
     disconnectFromShell,
   } = useShellConnection({
@@ -119,6 +123,7 @@ export function useShellRuntime({
     onProcessCompleteRef,
     isInitialized,
     autoConnect,
+    persistent,
     closeSocket,
     clearTerminalScreen,
     onOutputRef,
@@ -161,6 +166,7 @@ export function useShellRuntime({
     terminalRef,
     wsRef,
     isConnected,
+    attachCommand,
     isInitialized,
     isConnecting,
     isClaudeThemeOutdated,

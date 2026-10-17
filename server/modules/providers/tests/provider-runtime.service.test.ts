@@ -44,9 +44,10 @@ function createProvider(id: LLMProvider, runtime: IProviderRuntime): IProvider {
   } as unknown as IProvider;
 }
 
-function createService(providers: IProvider[]) {
+function createService(providers: IProvider[], terminalActive = false) {
   const providerMap = new Map(providers.map((provider) => [provider.id, provider]));
   return createProviderRuntimeService({
+    isTerminalSessionActive: () => terminalActive,
     listProviders: () => providers,
     resolveProvider(providerName) {
       const provider = providerMap.get(providerName as LLMProvider);
@@ -135,4 +136,13 @@ test('routes permission decisions through provider-owned runtime capabilities', 
   assert.deepEqual(service.getPendingApprovalsForSession('session-1'), [
     { requestId: 'request-1', sessionId: 'session-1' },
   ]);
+});
+
+test('a terminal-owned session cannot launch a competing SDK process', async () => {
+  let runs = 0;
+  const service = createService([createProvider('codex', createRuntime({
+    async run() { runs += 1; },
+  }))], true);
+  await assert.rejects(service.run('codex', 'duplicate message', { sessionId: 'app-session' }, { send() {} }), /共享终端/);
+  assert.equal(runs, 0);
 });

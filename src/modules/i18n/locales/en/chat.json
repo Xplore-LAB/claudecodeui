@@ -9,7 +9,9 @@
     "copied": "Message copied",
     "selectFormat": "Select copy format",
     "copyAsMarkdown": "Copy as markdown",
-    "copyAsText": "Copy as text"
+    "copyAsText": "Copy as text",
+    "markdownShort": "MD",
+    "textShort": "TXT"
   },
   "messageTypes": {
     "user": "U",
@@ -82,8 +84,9 @@
     "instructionDetail": "In the CLI, you would select this option interactively using arrow keys or by typing the number."
   },
   "thinking": {
-    "title": "Thinking...",
-    "emoji": "💭 Thinking..."
+    "streaming": "Thinking...",
+    "completed": "Thought for a few seconds",
+    "duration": "Thought for {{duration}} seconds"
   },
   "json": {
     "response": "JSON Response"
@@ -131,7 +134,14 @@
     "transcribing": "Transcribing…",
     "speak": "Read aloud",
     "stopSpeaking": "Stop",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "listening": "Listening… Tap the microphone to finish.",
+    "permissionDenied": "Microphone access was denied. Allow it in your browser settings and try again.",
+    "networkError": "Speech recognition could not connect. Check your network and try again.",
+    "noSpeech": "No speech detected. Please try again.",
+    "unsupported": "Use HTTPS in a speech-enabled browser, or the Android app. You can also use your keyboard microphone.",
+    "systemUnavailable": "System speech recognition is unavailable. Try your keyboard microphone.",
+    "reviewHint": "Your words become a draft. Review it before sending."
   },
   "input": {
     "placeholder": "Type / for commands, @ for files, or ask {{provider}} anything...",
@@ -171,6 +181,16 @@
       "title": "Replacing an earlier message",
       "filesNotReverted": "files the agent already changed are not reverted",
       "cancel": "Cancel"
+    },
+    "efforts": {
+      "none": "None",
+      "minimal": "Minimal",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "xhigh": "Extra high",
+      "max": "Max",
+      "ultra": "Ultra"
     }
   },
   "providerSelection": {
@@ -199,7 +219,23 @@
     "manageModels": "Manage models",
     "noModelsFound": "No models found.",
     "loadingModels": "Loading models…",
-    "clickToChange": "Click to change model"
+    "clickToChange": "Click to change model",
+    "welcome": "What would you like to build?",
+    "welcomeDescription": "Start with an idea. Make progress from anywhere.",
+    "starters": {
+      "explore": {
+        "label": "Explore",
+        "prompt": "Explain this project’s structure, main features, and how to run it."
+      },
+      "fix": {
+        "label": "Debug",
+        "prompt": "Help me investigate a bug by understanding the relevant code first. The symptom is: "
+      },
+      "build": {
+        "label": "Build",
+        "prompt": "Help me add a feature using the existing project. The requirement is: "
+      }
+    }
   },
   "session": {
     "continue": {
@@ -249,7 +285,18 @@
     "resumeSession": "Resume session: {{displayName}}...",
     "runCommand": "Run {{command}} in {{projectName}}",
     "startCli": "Starting Claude CLI in {{projectName}}",
-    "defaultCommand": "command"
+    "defaultCommand": "command",
+    "shared": {
+      "title": "Shared live terminal",
+      "connected": "Connected",
+      "connecting": "Connecting",
+      "disconnected": "Disconnected",
+      "description": "Desktop, web and mobile control the same session. Tasks continue when you switch views or disconnect this device.",
+      "localAttach": "Attach from a local terminal",
+      "copy": "Copy command",
+      "copied": "Copied",
+      "copyFailed": "Copy failed. Select the command and copy it manually."
+    }
   },
   "claudeStatus": {
     "actions": {
@@ -397,5 +444,20 @@
     "customModelsOnlyHint": "Hide the built-in {{provider}} models from every model picker and make your first model the default. Built-in models stay listed until you add a model.",
     "builtInModelsHidden": "Hidden from model pickers while “Use only my models” is on.",
     "customModelsOnlyFailed": "Unable to change this setting."
+  },
+  "commandMenu": {
+    "frequent": "Frequently Used",
+    "builtin": "Built-in Commands",
+    "skill": "Skills",
+    "project": "Project Commands",
+    "user": "User Commands",
+    "other": "Other Commands",
+    "empty": "No commands available"
+  },
+  "toolStatus": {
+    "running": "Running",
+    "completed": "Completed",
+    "error": "Error",
+    "denied": "Denied"
   }
 }

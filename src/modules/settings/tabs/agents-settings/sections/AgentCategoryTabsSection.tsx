@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 
 import { cn } from '@/shared/utils';
 import type { AgentCategory, AgentProvider } from '@/shared/types';
@@ -17,6 +17,8 @@ export default function AgentCategoryTabsSection({
   selectedCategory,
   onSelectCategory,
 }: AgentCategoryTabsSectionProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation('settings');
 
   return (
@@ -39,7 +41,7 @@ export default function AgentCategoryTabsSection({
             {category === 'permissions' && t('tabs.permissions')}
             {category === 'mcp' && t('tabs.mcpServers')}
             {category === 'skills' && t('tabs.skills', {
-              defaultValue: selectedAgent === 'opencode' ? 'Shared Skills' : 'Skills',
+              defaultValue: selectedAgent === 'opencode' ? tUi('interfaceText.sharedSkills_a7618', { defaultValue: "Shared Skills" }) : tUi('interfaceText.skills_e0921', { defaultValue: "Skills" }),
             })}
           </button>
         ))}

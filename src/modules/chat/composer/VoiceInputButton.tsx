@@ -7,14 +7,13 @@ import type { VoiceInputState } from '@/shared/types';
 type Props = {
   state: VoiceInputState;
   onToggle: () => void;
-  errorMsg?: string | null;
 };
 
 // Rendered by chat's ChatComposer next to the send button.
 // Push-to-talk mic button (presentational). Recording state and the stop-and-send action
 // are owned by the composer so the main Send button can drive them too. This button just
 // starts recording and, while recording, stops and drops the transcript into the input box.
-export default function VoiceInputButton({ state, onToggle, errorMsg }: Props) {
+export default function VoiceInputButton({ state, onToggle }: Props) {
   const { t } = useTranslation('chat');
 
   const icon =
@@ -28,13 +27,12 @@ export default function VoiceInputButton({ state, onToggle, errorMsg }: Props) {
 
   return (
     <span className="relative inline-flex">
-      {errorMsg && (
-        <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-red-600 px-2 py-1 text-xs text-white shadow-lg">
-          {errorMsg}
-        </span>
-      )}
       <PromptInputButton
-        tooltip={{ content: state === 'recording' ? t('voice.stopRecording') : t('voice.input') }}
+        aria-label={state === 'recording' ? t('voice.stopRecording') : state === 'transcribing' ? t('voice.transcribing') : t('voice.input')}
+        aria-pressed={state === 'recording'}
+        disabled={state === 'transcribing'}
+        className={`h-9 w-9 rounded-xl border ${state === 'recording' ? 'border-red-400/40 bg-red-500/10 text-red-600 motion-safe:animate-pulse' : 'border-primary/15 bg-primary/5 text-primary hover:bg-primary/10'}`}
+        tooltip={{ content: state === 'recording' ? t('voice.stopRecording') : state === 'transcribing' ? t('voice.transcribing') : t('voice.input') }}
         onClick={(e: { preventDefault: () => void }) => {
           e.preventDefault();
           onToggle();

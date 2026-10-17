@@ -114,12 +114,24 @@ export class CodexSessionSynchronizer implements IProviderSessionSynchronizer {
       return {
         sessionId,
         projectPath,
+        terminalAppSessionId: typeof payload?.originator === 'string' && payload.originator.startsWith('cloudcli-terminal:')
+          ? payload.originator.slice('cloudcli-terminal:'.length) : null,
         isSubagent: payload ? this.isSubagentSessionMeta(payload) : false,
       };
     });
 
     if (!parsed || parsed.isSubagent) {
       return null;
+    }
+
+    // The terminal owns the native thread. Merge its transcript into the stable
+    // app row so sidebar navigation reconnects to the same terminal.
+    if (parsed.terminalAppSessionId) {
+      const appSession = sessionsDb.getSessionById(parsed.terminalAppSessionId);
+      if (appSession?.provider === this.provider && appSession.project_path === parsed.projectPath
+        && !appSession.provider_session_id) {
+        sessionsDb.assignProviderSessionId(appSession.session_id, parsed.sessionId);
+      }
     }
 
     // A thread a session was edited off is left on disk on purpose, but it is

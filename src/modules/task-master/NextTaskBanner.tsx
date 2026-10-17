@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 import {
   CheckCircle,
   Circle,
@@ -51,6 +51,8 @@ function PriorityIndicator({ priority }: { priority?: string }) {
 
 /** Exported through the task-master barrel; the chat module's empty state renders it to surface the next task and prefill a prompt that starts it. */
 export default function NextTaskBanner({ onShowAllTasks = null, onStartTask = null, className = '' }: NextTaskBannerProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation();
   const {
     nextTask,
@@ -136,7 +138,7 @@ export default function NextTaskBanner({ onShowAllTasks = null, onStartTask = nu
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50">
                   <Target className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Task {nextTask.id}</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{tUi('interfaceText.task_7bb0d', { defaultValue: "Task" })}{' '}{nextTask.id}</span>
                 <PriorityIndicator priority={nextTask.priority} />
               </div>
               <p className="line-clamp-1 text-sm font-medium text-slate-900 dark:text-slate-100">{nextTask.title}</p>
@@ -204,9 +206,7 @@ export default function NextTaskBanner({ onShowAllTasks = null, onStartTask = nu
               <button
                 onClick={onShowAllTasks}
                 className="rounded bg-purple-600 px-2 py-1 text-xs text-white transition-colors hover:bg-purple-700"
-              >
-                Review
-              </button>
+              >{tUi('interfaceText.review_e29a7', { defaultValue: "Review" })}</button>
             )}
           </div>
         </div>

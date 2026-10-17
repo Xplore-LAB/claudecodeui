@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { AlertCircle, CheckCircle, Settings, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -89,7 +91,10 @@ export default function TaskIndicator({
   className = '',
   showLabel = false,
 }: TaskIndicatorProps) {
+  const { t } = useTranslation('sidebar');
   const indicatorConfig = getIndicatorConfig(status);
+  const label = t(`taskIndicator.${status}.label`, { defaultValue: indicatorConfig.label });
+  const title = t(`taskIndicator.${status}.title`, { defaultValue: indicatorConfig.title });
   const Icon = indicatorConfig.icon;
 
   if (showLabel) {
@@ -101,10 +106,10 @@ export default function TaskIndicator({
           indicatorConfig.colorClassName,
           className,
         )}
-        title={indicatorConfig.title}
+        title={title}
       >
         <Icon className={sizeClassNames[size]} />
-        <span className="font-normal">{indicatorConfig.label}</span>
+        <span className="font-normal">{label}</span>
       </div>
     );
   }
@@ -117,7 +122,7 @@ export default function TaskIndicator({
         paddingClassNames[size],
         className,
       )}
-      title={indicatorConfig.title}
+      title={title}
     >
       <Icon className={cn(sizeClassNames[size], indicatorConfig.colorClassName)} />
     </div>

@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import {
@@ -81,6 +82,8 @@ export default function PrdEditorHeader({
   onToggleFullscreen,
   onClose,
 }: PrdEditorHeaderProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const fileNameInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
@@ -100,7 +103,7 @@ export default function PrdEditorHeader({
                   value={fileName}
                   onChange={(event) => onFileNameChange(event.target.value)}
                   className="min-w-0 flex-1 border-none bg-transparent text-base font-medium text-gray-900 placeholder-gray-400 outline-none dark:text-white dark:placeholder-gray-500 sm:text-sm"
-                  placeholder="Enter PRD filename"
+                  placeholder={tUi('interfaceText.enterPRDFilename_4ee47', { defaultValue: "Enter PRD filename" })}
                   maxLength={100}
                 />
                 <span className="ml-1 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 sm:text-xs">
@@ -111,7 +114,7 @@ export default function PrdEditorHeader({
               <button
                 onClick={() => fileNameInputRef.current?.focus()}
                 className="p-1 text-gray-400 transition-colors hover:text-purple-600 dark:hover:text-purple-400"
-                title="Focus filename input"
+                title={tUi('interfaceText.focusFilenameInput_0c886', { defaultValue: "Focus filename input" })}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -129,36 +132,32 @@ export default function PrdEditorHeader({
                 PRD
               </span>
               {isNewFile && (
-                <span className="whitespace-nowrap rounded bg-green-100 px-2 py-1 text-xs text-green-600 dark:bg-green-900 dark:text-green-300">
-                  New
-                </span>
+                <span className="whitespace-nowrap rounded bg-green-100 px-2 py-1 text-xs text-green-600 dark:bg-green-900 dark:text-green-300">{tUi('interfaceText.new_6403f', { defaultValue: "New" })}</span>
               )}
             </div>
           </div>
 
-          <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-            Product Requirements Document
-          </p>
+          <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400 sm:text-sm">{tUi('interfaceText.productRequirementsDocument_cec09', { defaultValue: "Product Requirements Document" })}</p>
         </div>
       </div>
 
       <div className="flex flex-shrink-0 items-center gap-1 md:gap-2">
         <HeaderIconButton
-          title={previewMode ? 'Switch to edit mode' : 'Preview markdown'}
+          title={previewMode ? tUi('interfaceText.switchToEditMode_f5ad8', { defaultValue: "Switch to edit mode" }) : tUi('interfaceText.previewMarkdown_73bf1', { defaultValue: "Preview markdown" })}
           onClick={onTogglePreview}
           icon={<Eye className="h-5 w-5 md:h-4 md:w-4" />}
           active={previewMode}
         />
 
         <HeaderIconButton
-          title={wordWrap ? 'Disable word wrap' : 'Enable word wrap'}
+          title={wordWrap ? tUi('interfaceText.disableWordWrap_2c3a8', { defaultValue: "Disable word wrap" }) : tUi('interfaceText.enableWordWrap_e00d4', { defaultValue: "Enable word wrap" })}
           onClick={onToggleWordWrap}
-          icon={<span className="font-mono text-sm font-bold md:text-xs">WRAP</span>}
+          icon={<span className="font-mono text-sm font-bold md:text-xs">{tUi('interfaceText.wRAP_21ad0', { defaultValue: "WRAP" })}</span>}
           active={wordWrap}
         />
 
         <HeaderIconButton
-          title="Toggle theme"
+          title={tUi('interfaceText.toggleTheme_9b0ea', { defaultValue: "Toggle theme" })}
           onClick={onToggleTheme}
           icon={
             isDarkMode ? (
@@ -170,7 +169,7 @@ export default function PrdEditorHeader({
         />
 
         <HeaderIconButton
-          title="Download PRD"
+          title={tUi('interfaceText.downloadPRD_8f44c', { defaultValue: "Download PRD" })}
           onClick={onDownload}
           icon={<Download className="h-5 w-5 md:h-4 md:w-4" />}
         />
@@ -182,10 +181,10 @@ export default function PrdEditorHeader({
             'px-3 py-2 rounded-md disabled:opacity-50 flex items-center gap-2 transition-colors text-sm font-medium text-white min-h-[44px] md:min-h-0',
             'bg-purple-600 hover:bg-purple-700',
           )}
-          title="Generate tasks from PRD content"
+          title={tUi('interfaceText.generateTasksFromPRDContent_193b7', { defaultValue: "Generate tasks from PRD content" })}
         >
           <Sparkles className="h-4 w-4" />
-          <span className="hidden md:inline">Generate Tasks</span>
+          <span className="hidden md:inline">{tUi('interfaceText.generateTasks_3c09a', { defaultValue: "Generate Tasks" })}</span>
         </button>
 
         <button
@@ -201,12 +200,12 @@ export default function PrdEditorHeader({
               <svg className="h-5 w-5 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="hidden sm:inline">Saved!</span>
+              <span className="hidden sm:inline">{tUi('interfaceText.saved_e929b', { defaultValue: "Saved!" })}</span>
             </>
           ) : (
             <>
               <Save className="h-5 w-5 md:h-4 md:w-4" />
-              <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save PRD'}</span>
+              <span className="hidden sm:inline">{saving ? tUi('interfaceText.saving_ae7e8', { defaultValue: "Saving..." }) : tUi('interfaceText.savePRD_06414', { defaultValue: "Save PRD" })}</span>
             </>
           )}
         </button>
@@ -214,13 +213,13 @@ export default function PrdEditorHeader({
         <button
           onClick={onToggleFullscreen}
           className="hidden items-center justify-center rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white md:flex"
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          title={isFullscreen ? tUi('interfaceText.exitFullscreen_1302d', { defaultValue: "Exit fullscreen" }) : tUi('interfaceText.fullscreen_bb08d', { defaultValue: "Fullscreen" })}
         >
           {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
 
         <HeaderIconButton
-          title="Close"
+          title={tUi('interfaceText.close_bbfa7', { defaultValue: "Close" })}
           onClick={onClose}
           icon={<X className="h-6 w-6 md:h-4 md:w-4" />}
         />

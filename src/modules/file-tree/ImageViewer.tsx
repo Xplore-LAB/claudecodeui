@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
@@ -12,6 +13,8 @@ type ImageViewerProps = {
 
 /** Rendered by FileTree to preview an image file picked in the tree. */
 export default function ImageViewer({ file, onClose }: ImageViewerProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +74,7 @@ export default function ImageViewer({ file, onClose }: ImageViewerProps) {
         <div className="flex min-h-[400px] items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
           {loading && (
             <div className="text-center text-gray-500 dark:text-gray-400">
-              <p>Loading image...</p>
+              <p>{tUi('interfaceText.loadingImage_3aa5c', { defaultValue: "Loading image..." })}</p>
             </div>
           )}
           {!loading && imageUrl && (

@@ -27,11 +27,20 @@ test('lists GPT-6 Sol and GPT-6 Luna with the effort levels the Codex CLI accept
   );
 });
 
-test('bundles a Codex CLI new enough to know the GPT-6 Sol and Luna models', () => {
-  // Codex only ships metadata for gpt-6-sol / gpt-6-luna from 0.155.0 on. An
-  // older CLI still sends the request, but on fallback metadata: it warns
-  // "Model metadata ... not found" and quietly drops `ultra` to `medium`.
+test('lists GPT-6.1 Sol with all supported reasoning efforts', () => {
+  const sol = findCodexModel('gpt-6.1-sol');
+  assert.equal(sol?.label, 'GPT-6.1 Sol');
+  assert.equal(sol?.effort?.default, 'low');
+  assert.deepEqual(
+    sol?.effort?.values.map((effort) => effort.value),
+    ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'],
+  );
+});
+
+test('bundles a Codex CLI new enough to know GPT-6.1 Sol', () => {
+  // A CLI without the new model metadata can silently replace an unsupported
+  // reasoning effort with its fallback level.
   const { version } = require('@openai/codex/package.json') as { version: string };
   const [major, minor] = version.split('.').map(Number);
-  assert.ok(major > 0 || minor >= 155, `bundled @openai/codex ${version} predates 0.155.0`);
+  assert.ok(major > 0 || minor >= 163, `bundled @openai/codex ${version} predates 0.163.0`);
 });

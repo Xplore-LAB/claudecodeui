@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { memo, useMemo, useState } from 'react';
 import { Bot, ChevronRight, CircleAlert, CircleCheck, CircleDashed } from 'lucide-react';
 
@@ -83,6 +84,8 @@ export const SubagentPanel = memo(({
   createDiff,
   selectedProject,
 }: SubagentPanelProps) => {
+  const { t: tUi } = useUiTranslation('common');
+
   // Collapsed by default: an agent is a summary of work, and its detail is
   // only wanted on demand.
   const isExporting = useIsExportingTranscript();
@@ -136,21 +139,15 @@ export const SubagentPanel = memo(({
         <span className={cn('ml-auto flex flex-shrink-0 items-center gap-1 text-[11px]', STATUS_STYLES[status])}>
           {status === 'running' ? (
             <>
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-purple-500 dark:bg-purple-400" />
-              running
-            </>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-purple-500 dark:bg-purple-400" />{tUi('interfaceText.running_3c49d', { defaultValue: "running" })}</>
           ) : status === 'failed' ? (
             <>
-              <CircleAlert className="h-3 w-3" />
-              failed
-            </>
+              <CircleAlert className="h-3 w-3" />{tUi('interfaceText.failed_5f5f8', { defaultValue: "failed" })}</>
           ) : status === 'stopped' ? (
             // Neither a spinner nor a check mark: the agent never reported and
             // the process it ran in is gone, so there is no outcome to draw.
-            <span title="The run ended before this agent reported back" className="flex items-center gap-1">
-              <CircleDashed className="h-3 w-3" />
-              no result
-            </span>
+            <span title={tUi('interfaceText.theRunEndedBeforeThisAgentReportedBack_053d7', { defaultValue: "The run ended before this agent reported back" })} className="flex items-center gap-1">
+              <CircleDashed className="h-3 w-3" />{tUi('interfaceText.noResult_880d6', { defaultValue: "no result" })}</span>
           ) : (
             <>
               <CircleCheck className="h-3 w-3" />
@@ -168,7 +165,7 @@ export const SubagentPanel = memo(({
 
           {prompt && (
             <div className="rounded border border-border/40 bg-muted/40 p-2 text-xs text-muted-foreground">
-              <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">Task</div>
+              <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">{tUi('interfaceText.task_7bb0d', { defaultValue: "Task" })}</div>
               <div className="line-clamp-6 whitespace-pre-wrap break-words">{prompt}</div>
             </div>
           )}
@@ -183,7 +180,7 @@ export const SubagentPanel = memo(({
 
           {resultText && (
             <div className="rounded border border-border/40 bg-muted/30 p-2">
-              <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">Result</div>
+              <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">{tUi('interfaceText.result_5faa5', { defaultValue: "Result" })}</div>
               <MarkdownContent content={resultText} className="prose prose-sm max-w-none dark:prose-invert" />
             </div>
           )}

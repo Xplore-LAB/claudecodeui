@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 import { PencilIcon, XIcon } from 'lucide-react';
 
 type QueuedMessageCardProps = {
@@ -18,6 +18,8 @@ export default function QueuedMessageCard({
   onEdit,
   onDelete,
 }: QueuedMessageCardProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation('chat');
 
   return (
@@ -35,8 +37,7 @@ export default function QueuedMessageCard({
           <p className="mt-0.5 line-clamp-2 break-words text-sm text-foreground/90">{content}</p>
           {attachmentCount > 0 && (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {attachmentCount} {attachmentCount === 1 ? 'file' : 'files'} attached
-            </p>
+              {attachmentCount} {attachmentCount === 1 ? tUi('interfaceText.file_971c4', { defaultValue: "file" }) : tUi('interfaceText.files_a1f13', { defaultValue: "files" })}{' '}{tUi('interfaceText.attached_20988', { defaultValue: "attached" })}</p>
           )}
         </div>
 

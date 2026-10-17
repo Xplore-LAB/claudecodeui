@@ -40,6 +40,10 @@ type ChatInterfaceProps = {
   onNavigateToSession?: (targetSessionId: string, options?: SessionNavigationOptions) => void;
   onSessionEstablished?: (sessionId: string, context: SessionEstablishedContext) => void;
   onShowSettings?: () => void;
+  /** Opens the shared agent terminal from the workspace chat view. */
+  onOpenTerminal?: () => void;
+  /** The shared terminal owns this conversation; the SDK composer must not start another process. */
+  terminalOwned?: boolean;
   showRawParameters?: boolean;
   showThinking?: boolean;
   sendByCtrlEnter?: boolean;
@@ -64,6 +68,8 @@ function ChatInterface({
   onNavigateToSession,
   onSessionEstablished,
   onShowSettings,
+  onOpenTerminal,
+  terminalOwned = false,
   showRawParameters,
   showThinking,
   sendByCtrlEnter,
@@ -455,6 +461,14 @@ function ChatInterface({
   return (
     <PermissionContext.Provider value={permissionContextValue}>
       <div className="flex h-full min-h-0 flex-col">
+        {onOpenTerminal && (
+          <div className="flex shrink-0 justify-end border-b border-border/40 px-3 py-1.5">
+            <button type="button" onClick={onOpenTerminal}
+              className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
+              {t('openSharedTerminal', { defaultValue: '打开实时终端' })}
+            </button>
+          </div>
+        )}
         <MarkdownWorkspaceContext.Provider value={markdownWorkspaceValue}>
           <TranscriptSessionContext.Provider value={transcriptSessionValue}>
             <ChatMessagesPane
@@ -509,7 +523,7 @@ function ChatInterface({
               // Editing replaces the turn and everything after it, so it is only
               // offered when the session is idle — a half-truncated transcript with
               // a live stream writing into it is not recoverable.
-              onEditMessage={supportsMessageEditing && !isProcessing ? beginEditMessage : undefined}
+              onEditMessage={supportsMessageEditing && !isProcessing && !terminalOwned ? beginEditMessage : undefined}
               onForkFromMessage={supportsSessionForking ? handleForkFromMessage : undefined}
               onLoadFullTranscript={loadFullTranscript}
             />
@@ -531,7 +545,15 @@ function ChatInterface({
             </div>
           )}
 
-          <ChatComposer
+          {terminalOwned && onOpenTerminal ? (
+            <div className="m-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 text-sm">
+              <span className="text-muted-foreground">{t('sharedTerminalOwnsSession', { defaultValue: '此会话正在共享终端中运行，聊天记录会继续同步。' })}</span>
+              <button type="button" onClick={onOpenTerminal}
+                className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
+                {t('continueInSharedTerminal', { defaultValue: '接入原终端继续' })}
+              </button>
+            </div>
+          ) : <ChatComposer
           pendingPermissionRequests={pendingPermissionRequests}
           handlePermissionDecision={handlePermissionDecision}
           handleGrantToolPermission={handleGrantToolPermission}
@@ -601,7 +623,7 @@ function ChatInterface({
           placeholder={t('input.placeholder', { provider: selectedProviderLabel })}
           isTextareaExpanded={isTextareaExpanded}
           sendByCtrlEnter={sendByCtrlEnter}
-        />
+          />}
         </div>
       </div>
 

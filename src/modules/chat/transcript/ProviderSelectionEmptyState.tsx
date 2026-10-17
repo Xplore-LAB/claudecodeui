@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
-import { Trans, useTranslation } from "react-i18next";
+import { ChevronDown, Plus, Compass, Wrench, Sparkles } from "lucide-react";
+import { Trans, useTranslation, useTranslation as useUiTranslation } from "react-i18next";
 
 import type {
   ProjectSession,
@@ -101,6 +101,8 @@ export default function ProviderSelectionEmptyState({
   onShowAllTasks,
   setInput,
 }: ProviderSelectionEmptyStateProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation("chat");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modelLibraryOpen, setModelLibraryOpen] = useState(false);
@@ -186,12 +188,15 @@ export default function ProviderSelectionEmptyState({
     return (
       <div className="flex h-full items-center justify-center px-4">
         <div className="w-full max-w-[34.25rem]">
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
+              <Sparkles className="h-5 w-5" />
+            </div>
             <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              {t("providerSelection.title")}
+              {t("providerSelection.welcome", { defaultValue: "What would you like to build?" })}
             </h2>
             <p className="mt-1 text-[13px] text-muted-foreground">
-              {t("providerSelection.description")}
+              {t("providerSelection.welcomeDescription", { defaultValue: "Start with an idea. Make progress from anywhere." })}
             </p>
           </div>
 
@@ -229,7 +234,7 @@ export default function ProviderSelectionEmptyState({
             </DialogTrigger>
 
             <DialogContent className="max-w-md overflow-hidden p-0">
-              <DialogTitle>Model Selector</DialogTitle>
+              <DialogTitle>{tUi('interfaceText.modelSelector_82a03', { defaultValue: "Model Selector" })}</DialogTitle>
               <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-muted/20 px-4 py-3">
                 <div>
                   <p className="text-sm font-semibold text-foreground">
@@ -333,7 +338,27 @@ export default function ProviderSelectionEmptyState({
             }
           </p>
 
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground/60">
+          <div className="mx-auto mt-5 grid max-w-sm grid-cols-3 gap-2">
+            {[
+              { id: 'explore', icon: Compass },
+              { id: 'fix', icon: Wrench },
+              { id: 'build', icon: Sparkles },
+            ].map(({ id, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-border/50 bg-card/70 px-2 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/25 hover:bg-primary/5 hover:text-primary"
+                onClick={() => {
+                  setInput(t(`providerSelection.starters.${id}.prompt`));
+                  textareaRef.current?.focus();
+                }}
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                {t(`providerSelection.starters.${id}.label`)}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 hidden items-center justify-center gap-1.5 text-center text-xs text-muted-foreground/60 sm:flex">
             <Trans
               ns="chat"
               i18nKey="providerSelection.pressToSearch"

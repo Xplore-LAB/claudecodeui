@@ -50,7 +50,8 @@ const menuBaseStyle: CSSProperties = {
   backdropFilter: 'blur(12px)',
 };
 
-const namespaceLabels: Record<string, string> = {
+// English fallbacks for the command groups supplied by each provider.
+const NAMESPACE_LABELS: Record<string, string> = {
   frequent: 'Frequently Used',
   builtin: 'Built-in Commands',
   skill: 'Skills',
@@ -243,7 +244,7 @@ export default function CommandMenu({
           textAlign: 'center',
         }}
       >
-        No commands available
+        {t('chat:commandMenu.empty', { defaultValue: 'No commands available' })}
       </div>
     );
   }
@@ -260,7 +261,9 @@ export default function CommandMenu({
         <div key={namespace} className="command-group">
           {orderedNamespaces.length > 1 && (
             <div className="flex items-center justify-between px-2 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <span>{namespaceLabels[namespace] || namespace}</span>
+              <span>{NAMESPACE_LABELS[namespace]
+                ? t(`chat:commandMenu.${namespace}`, { defaultValue: NAMESPACE_LABELS[namespace] })
+                : namespace}</span>
               <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 {(groupedCommands[namespace] || []).length}
               </span>

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ChangeEvent,
@@ -187,6 +187,8 @@ export default function ChatComposer({
   isTextareaExpanded,
   sendByCtrlEnter,
 }: ChatComposerProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation('chat');
   const fileDropdownRef = useRef<HTMLDivElement | null>(null);
   const selectedFileRef = useRef<HTMLDivElement | null>(null);
@@ -223,21 +225,23 @@ export default function ChatComposer({
 
   // Voice state is hosted here (not in the mic button) so the main Send button can stop
   // recording and send the transcript in one tap, the way the mic button drops it in the box.
-  const voiceAvailable = useVoiceAvailable();
+  const serverVoiceAvailable = useVoiceAvailable();
+  // Retains actionable microphone failures long enough to read on a phone.
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleVoiceError = useCallback((msg: string) => {
     setVoiceError(msg);
     if (voiceErrorTimer.current) clearTimeout(voiceErrorTimer.current);
-    voiceErrorTimer.current = setTimeout(() => setVoiceError(null), 4000);
+    voiceErrorTimer.current = setTimeout(() => setVoiceError(null), 7000);
   }, []);
   useEffect(() => () => {
     if (voiceErrorTimer.current) clearTimeout(voiceErrorTimer.current);
   }, []);
   const noopTranscript = useCallback(() => {}, []);
-  const { state: voiceState, toggle: voiceToggle, stop: voiceStop } = useVoiceInput(
+  const { state: voiceState, preview: voicePreview, toggle: voiceToggle, stop: voiceStop } = useVoiceInput(
     onVoiceTranscript ?? noopTranscript,
     handleVoiceError,
+    serverVoiceAvailable,
   );
   const isRecording = voiceState === 'recording';
   const isTranscribing = voiceState === 'transcribing';
@@ -382,7 +386,7 @@ export default function ChatComposer({
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
-                <p className="text-sm font-medium">Drop files here</p>
+                <p className="text-sm font-medium">{tUi('interfaceText.dropFilesHere_77348', { defaultValue: "Drop files here" })}</p>
               </div>
             </div>
           )}
@@ -406,6 +410,13 @@ export default function ChatComposer({
 
           <input {...getInputProps()} />
 
+          {(voiceState !== 'idle' || voiceError) && (
+            <div role={voiceError ? 'alert' : 'status'} className={`mx-3 mt-3 rounded-xl px-3 py-2 text-xs leading-5 ${voiceError ? 'bg-destructive/10 text-destructive' : 'bg-primary/5 text-primary'}`}>
+              {voiceError || voicePreview || (isRecording
+                ? t('voice.listening', { defaultValue: 'Listening… Tap the microphone to finish.' })
+                : t('voice.transcribing'))}
+            </div>
+          )}
           <PromptInputBody>
             <div ref={inputHighlightRef} aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
               <div className="chat-input-placeholder block w-full whitespace-pre-wrap break-words px-4 py-2 text-sm leading-6 text-transparent">
@@ -439,8 +450,8 @@ export default function ChatComposer({
               <PaperclipIcon />
             </PromptInputButton>
 
-            {onVoiceTranscript && voiceAvailable && (
-              <VoiceInputButton state={voiceState} onToggle={voiceToggle} errorMsg={voiceError} />
+            {onVoiceTranscript && (
+              <VoiceInputButton state={voiceState} onToggle={voiceToggle} />
             )}
 
             <TokenUsageSummary usage={tokenBudget} onClick={onShowTokenUsage} />

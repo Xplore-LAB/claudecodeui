@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { memo, useMemo } from 'react';
 
 import { Queue, QueueItem, QueueItemContent, QueueItemIndicator } from '@/modules/chat/tools/Queue';
@@ -25,6 +26,8 @@ const TodoList = memo(
     todos: TodoItem[];
     isResult?: boolean;
   }) => {
+  const { t: tUi } = useUiTranslation('common');
+
     const normalized = useMemo(
       () => todos.map((todo) => ({ ...todo, queueStatus: normalizeStatus(todo.status) })),
       [todos],
@@ -40,8 +43,7 @@ const TodoList = memo(
     return (
       <div>
         {isResult && (
-          <div className="mb-1.5 text-xs font-medium text-muted-foreground">
-            Todo List ({normalized.length} {normalized.length === 1 ? 'item' : 'items'})
+          <div className="mb-1.5 text-xs font-medium text-muted-foreground">{tUi('interfaceText.todoList_cb971', { defaultValue: "Todo List (" })}{normalized.length} {normalized.length === 1 ? tUi('interfaceText.item_3a7d9', { defaultValue: "item" }) : tUi('interfaceText.items_7316c', { defaultValue: "items" })})
           </div>
         )}
         {/* The count lives in the row header; this only draws the shape of it. */}

@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
 import { Check, Edit2, GitBranch, MoreHorizontal, Trash2, X } from 'lucide-react';
 import type { TFunction } from 'i18next';
@@ -62,6 +63,8 @@ export default function SessionOptions({
   className,
   t,
 }: SessionOptionsProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const containerRef = useRef<HTMLDivElement>(null);
   const providerLabel = PROVIDER_LABELS[provider];
   const { copyState, copyLabel, setOptionsOpen, handleCopyAction, isCopyPending, CopyStateIcon } =
@@ -156,20 +159,20 @@ export default function SessionOptions({
               <p className="truncate text-xs font-medium text-foreground" title={sessionName}>
                 {sessionName}
               </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{providerLabel} session</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{providerLabel}{' '}{tUi('interfaceText.session_fcbdc', { defaultValue: "session" })}</p>
             </div>
           )}
           items={[
             ...(projectId !== null ? [{
               key: 'rename',
-              label: 'Rename session',
+              label: tUi('interfaceText.renameSession_25fc9', { defaultValue: "Rename session" }),
               icon: Edit2,
               onSelect: () => onStartEditingSession(projectId, sessionId, sessionName),
             }] : []),
             {
               key: 'copy',
               label: copyLabel,
-              description: copyState === 'error' ? 'Click to try again.' : undefined,
+              description: copyState === 'error' ? tUi('interfaceText.clickToTryAgain_ffe78', { defaultValue: "Click to try again." }) : undefined,
               icon: CopyStateIcon,
               loading: isCopyPending,
               closeOnSelect: false,
@@ -177,14 +180,14 @@ export default function SessionOptions({
             },
             ...(canFork && onFork ? [{
               key: 'fork',
-              label: 'Fork session',
-              description: 'Continue from a copy, leaving this one untouched.',
+              label: tUi('interfaceText.forkSession_71c01', { defaultValue: "Fork session" }),
+              description: tUi('interfaceText.continueFromACopyLeavingThisOneUntouched_70871', { defaultValue: "Continue from a copy, leaving this one untouched." }),
               icon: GitBranch,
               onSelect: onFork,
             }] : []),
             ...(canDelete && !isProcessing ? [{
               key: 'delete',
-              label: 'Archive or delete session',
+              label: tUi('interfaceText.archiveOrDeleteSession_82512', { defaultValue: "Archive or delete session" }),
               icon: Trash2,
               isDanger: true,
               showDividerBefore: true,

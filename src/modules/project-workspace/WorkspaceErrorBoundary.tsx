@@ -1,5 +1,5 @@
 import { useCallback, useState, type ErrorInfo, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, useTranslation as useUiTranslation } from 'react-i18next';
 import {
   ErrorBoundary as ReactErrorBoundary,
   type FallbackProps,
@@ -31,6 +31,8 @@ function ErrorFallback({
   showDetails,
   componentStack,
 }: ErrorFallbackProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -63,9 +65,7 @@ function ErrorFallback({
           <button
             onClick={resetErrorBoundary}
             className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            Try Again
-          </button>
+          >{tUi('interfaceText.tryAgain_cef2f', { defaultValue: "Try Again" })}</button>
         </div>
       </div>
     </div>

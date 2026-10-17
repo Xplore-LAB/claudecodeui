@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import { memo, useState } from 'react';
 import { Brain, MessageSquareText } from 'lucide-react';
 
@@ -53,6 +54,8 @@ SubagentNote.displayName = 'SubagentNote';
  * hundred tool renderers.
  */
 export const SubagentTimeline = memo(({ activity, activityCount, onFileOpen, createDiff, selectedProject }: SubagentTimelineProps) => {
+  const { t: tUi } = useUiTranslation('common');
+
   const isExporting = useIsExportingTranscript();
   // Raised by the "show more" step so a long run can be inspected in full
   // without paying for it up front.
@@ -97,15 +100,13 @@ export const SubagentTimeline = memo(({ activity, activityCount, onFileOpen, cre
           type="button"
           onClick={() => setRenderLimit((previous) => previous + INITIALLY_RENDERED_ACTIVITIES * 4)}
           className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          Show {hiddenCount} more {hiddenCount === 1 ? 'step' : 'steps'}
+        >{tUi('interfaceText.show_d97d1', { defaultValue: "Show" })}{' '}{hiddenCount}{' '}{tUi('interfaceText.more_e7c95', { defaultValue: "more" })}{' '}{hiddenCount === 1 ? 'step' : 'steps'}
         </button>
       )}
 
       {untransmittedCount > 0 && hiddenCount === 0 && (
         <div className="text-[11px] text-muted-foreground/60">
-          {untransmittedCount} earlier {untransmittedCount === 1 ? 'step is' : 'steps are'} not included
-        </div>
+          {untransmittedCount}{' '}{tUi('interfaceText.earlier_f12e9', { defaultValue: "earlier" })}{' '}{untransmittedCount === 1 ? tUi('interfaceText.stepIs_b9225', { defaultValue: "step is" }) : tUi('interfaceText.stepsAre_b88b9', { defaultValue: "steps are" })}{' '}{tUi('interfaceText.notIncluded_76fe3', { defaultValue: "not included" })}</div>
       )}
     </>
   );

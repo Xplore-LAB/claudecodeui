@@ -1,3 +1,4 @@
+import { useTranslation as useUiTranslation } from 'react-i18next';
 import type { CodeEditorFile } from '@/shared/types';
 
 type CodeEditorBinaryFileProps = {
@@ -20,6 +21,8 @@ export default function CodeEditorBinaryFile({
   title,
   message,
 }: CodeEditorBinaryFileProps) {
+  const { t: tUi } = useUiTranslation('common');
+
   const binaryContent = (
     <div className="flex h-full w-full flex-col items-center justify-center bg-background p-8 text-muted-foreground">
       <div className="flex max-w-md flex-col items-center gap-4 text-center">
@@ -35,9 +38,7 @@ export default function CodeEditorBinaryFile({
         <button
           onClick={onClose}
           className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Close
-        </button>
+        >{tUi('interfaceText.close_bbfa7', { defaultValue: "Close" })}</button>
       </div>
     </div>
   );
@@ -53,7 +54,7 @@ export default function CodeEditorBinaryFile({
             type="button"
             onClick={onClose}
             className="flex items-center justify-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            title="Close"
+            title={tUi('interfaceText.close_bbfa7', { defaultValue: "Close" })}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -85,7 +86,7 @@ export default function CodeEditorBinaryFile({
               type="button"
               onClick={onToggleFullscreen}
               className="flex items-center justify-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              title={isFullscreen ? tUi('interfaceText.exitFullscreen_1302d', { defaultValue: "Exit fullscreen" }) : tUi('interfaceText.fullscreen_bb08d', { defaultValue: "Fullscreen" })}
             >
               {isFullscreen ? (
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +102,7 @@ export default function CodeEditorBinaryFile({
               type="button"
               onClick={onClose}
               className="flex items-center justify-center rounded-md p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-              title="Close"
+              title={tUi('interfaceText.close_bbfa7', { defaultValue: "Close" })}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

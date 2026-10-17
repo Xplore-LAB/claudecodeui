@@ -9,7 +9,9 @@
     "copied": "消息已复制",
     "selectFormat": "选择复制格式",
     "copyAsMarkdown": "复制为 Markdown",
-    "copyAsText": "复制为纯文本"
+    "copyAsText": "复制为纯文本",
+    "markdownShort": "MD",
+    "textShort": "TXT"
   },
   "messageTypes": {
     "user": "U",
@@ -66,11 +68,18 @@
     "diffUnavailable": "（无法获取此命令的文件差异）",
     "partUnavailable": "（部分差异无法获取）",
     "skipped": "（已跳过此 git 命令的文件差异）",
-    "shared": "（同一时间有另一个命令在此仓库中运行；任一命令所做的更改都可能显示在任一结果下）"
+    "shared": "（同一时间有另一个命令在此仓库中运行；任一命令所做的更改都可能显示在任一结果下）",
+    "moreLines_one": "… 另有 {{count}} 行",
+    "moreFiles_one": "… 另有 {{count}} 个文件发生变更",
+    "filesNotShown_one": "{{count}} 个文件发生变更（二进制文件、仅模式变更或内容过大，无法显示）",
+    "filesUnavailable_one": "{{count}} 个文件发生变更（无法获取差异）",
+    "filesChanged_one": "{{count}} 个文件发生变更",
+    "morePaths_one": "另有 {{count}} 项"
   },
   "thinking": {
-    "title": "思考中...",
-    "emoji": "💭 思考中..."
+    "streaming": "正在思考…",
+    "completed": "已思考片刻",
+    "duration": "已思考 {{duration}} 秒"
   },
   "json": {
     "response": "JSON 响应"
@@ -98,14 +107,14 @@
     "permissionMode": "权限模式",
     "modes": {
       "default": "默认模式",
-      "auto": "Auto Mode",
+      "auto": "自动模式",
       "acceptEdits": "编辑模式",
       "bypassPermissions": "无限制模式",
       "plan": "计划模式"
     },
     "descriptions": {
       "default": "只有受信任的命令（ls、cat、grep、git status 等）自动运行。其他命令将被跳过。可以写入工作区。",
-      "auto": "A model classifier decides per tool call whether to approve or deny. Hands-off, but safer than Bypass — denials still happen.",
+      "auto": "由模型逐次判断是否批准工具调用。无需手动审批，但仍可能拒绝操作，比完全放行更稳妥。",
       "acceptEdits": "工作区内的所有命令自动运行。完全自动模式，具有沙盒执行功能。",
       "bypassPermissions": "完全的系统访问，无限制。所有命令自动运行，具有完整的磁盘和网络访问权限。请谨慎使用。",
       "plan": "计划模式 - 不执行任何命令"
@@ -118,7 +127,14 @@
     "transcribing": "转写中…",
     "speak": "朗读",
     "stopSpeaking": "停止",
-    "loading": "加载中…"
+    "loading": "加载中…",
+    "listening": "正在聆听… 点击麦克风结束，文字将填入输入框。",
+    "permissionDenied": "麦克风权限未开启，请在浏览器设置中允许使用麦克风后重试。",
+    "networkError": "语音识别连接失败，请检查网络后重试。",
+    "noSpeech": "没有识别到语音，请再试一次。",
+    "unsupported": "请通过 HTTPS 使用支持语音识别的浏览器，或在新版安卓 App 中使用。也可以使用输入法自带的麦克风。",
+    "systemUnavailable": "手机未提供可用的系统语音识别，请使用输入法自带的麦克风。",
+    "reviewHint": "说完先变成草稿，确认后再发送。"
   },
   "input": {
     "placeholder": "输入 / 调用命令，@ 选择文件，或向 {{provider}} 提问...",
@@ -165,7 +181,31 @@
       "default": "请在上方选择一个提供者以开始"
     },
     "pressToSearch": "按 <kbd>{{shortcut}}</kbd> 搜索会话、文件和提交",
-    "chooseModelDescriptionCustomOnly": "{{providers, list}} 仅列出您的模型"
+    "chooseModelDescriptionCustomOnly": "{{providers, list}} 仅列出您的模型",
+    "chooseModel": "选择模型",
+    "chooseModelDescription": "统一查看内置模型和自定义模型",
+    "addModel": "添加模型",
+    "searchModels": "搜索模型…",
+    "manageModels": "管理模型",
+    "noModelsFound": "未找到模型。",
+    "loadingModels": "正在加载模型…",
+    "clickToChange": "点击切换模型",
+    "welcome": "今天想完成什么？",
+    "welcomeDescription": "从一个想法开始，让工作继续。",
+    "starters": {
+      "explore": {
+        "label": "了解项目",
+        "prompt": "请先梳理这个项目的目录结构、主要功能和运行方式。"
+      },
+      "fix": {
+        "label": "定位问题",
+        "prompt": "我想排查一个问题，请先帮我理解相关代码，再一起定位原因。问题现象是："
+      },
+      "build": {
+        "label": "实现功能",
+        "prompt": "我想增加一个功能，请结合现有项目给出实现方案。功能需求是："
+      }
+    }
   },
   "session": {
     "continue": {
@@ -215,7 +255,18 @@
     "resumeSession": "恢复会话：{{displayName}}...",
     "runCommand": "在 {{projectName}} 中运行 {{command}}",
     "startCli": "在 {{projectName}} 中启动 Claude CLI",
-    "defaultCommand": "命令"
+    "defaultCommand": "命令",
+    "shared": {
+      "title": "共享实时终端",
+      "connected": "已连接",
+      "connecting": "连接中",
+      "disconnected": "已断开",
+      "description": "电脑、网页和手机控制同一个会话。切换页面或断开此设备后，后台任务继续运行。",
+      "localAttach": "在本机终端接入",
+      "copy": "复制命令",
+      "copied": "已复制",
+      "copyFailed": "复制失败，请选中命令手动复制。"
+    }
   },
   "claudeStatus": {
     "actions": {
@@ -234,15 +285,23 @@
       "seconds": "{{count}}s",
       "minutesSeconds": "{{minutes}}m {{seconds}}s",
       "label": "{{time}} elapsed",
-      "startingNow": "Starting now"
+      "startingNow": "即将开始"
     },
     "stop": "停止",
     "controls": {
-      "stopGeneration": "Stop Generation",
-      "pressEscToStop": "Press Esc anytime to stop"
+      "stopGeneration": "停止生成",
+      "pressEscToStop": "随时按 Esc 停止"
     },
     "providers": {
       "assistant": "Assistant"
+    },
+    "backgroundWork": "后台任务",
+    "backgroundTask": {
+      "workflow": "工作流 {{name}}",
+      "agent": "智能体 {{description}}",
+      "command": "命令 {{description}}",
+      "count": "{{count}} 项任务",
+      "sendAnyway": "此会话仍有后台任务在运行：\n{{work}}\n\n发送新消息会开始新一轮对话并停止这些任务，尚未返回的结果将丢失。仍要发送吗？"
     }
   },
   "projectSelection": {
@@ -261,6 +320,22 @@
       "title": "正在替换先前的消息",
       "filesNotReverted": "已修改的文件不会被还原",
       "cancel": "取消"
+    },
+    "reasoning": "推理强度",
+    "model": "模型",
+    "effortDefault": "默认",
+    "loadingModels": "正在加载模型…",
+    "modelMenu": "选择模型和推理强度",
+    "permissionHeading": "如何审批 {{provider}} 的操作？",
+    "efforts": {
+      "none": "无",
+      "minimal": "最低",
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "xhigh": "极高",
+      "max": "最高",
+      "ultra": "超高"
     }
   },
   "export": {
@@ -304,5 +379,85 @@
     "customModelsOnlyHint": "在所有模型选择器中隐藏 {{provider}} 的内置模型，并将您的第一个模型设为默认模型。在您添加模型之前，内置模型仍会显示。",
     "builtInModelsHidden": "开启“仅使用我的模型”时，这些模型不会出现在模型选择器中。",
     "customModelsOnlyFailed": "无法更改此设置。"
+  },
+  "commandMenu": {
+    "frequent": "常用命令",
+    "builtin": "内置命令",
+    "skill": "技能",
+    "project": "项目命令",
+    "user": "用户命令",
+    "other": "其他命令",
+    "empty": "暂无可用命令"
+  },
+  "misc": {
+    "availableCommands": "可用命令",
+    "copyToClipboard": "复制到剪贴板",
+    "copyCommand": "复制命令",
+    "runningTask": "正在执行任务",
+    "userAskedRevise": "用户要求修改计划",
+    "typeAnswer": "输入你的回答…",
+    "skipOne": "跳过",
+    "skipAll": "全部跳过",
+    "exportChat": "导出对话",
+    "closeImagePreview": "关闭图片预览",
+    "filterCommands": "筛选命令…",
+    "closeModal": "关闭命令结果窗口",
+    "noDescription": "暂无描述。",
+    "modelChangeFailed": "暂时无法切换模型。",
+    "choiceSavedHint": "此选择已为当前会话保存，并将作为新对话的默认设置。",
+    "docsSearchSubtitle": "直接在对话中搜索内置命令、语法和使用方法。",
+    "enterModelInfo": "请填写模型名称和模型 ID。",
+    "modelSaveFailed": "无法保存此模型。",
+    "modelDeleteFailed": "无法删除此模型。",
+    "cancelEditing": "取消编辑",
+    "userDeniedTool": "用户拒绝了工具调用",
+    "showTokenUsage": "显示 Token 用量",
+    "fallbackCommands": {
+      "models": "查看当前服务商可用的模型。",
+      "cost": "查看当前会话的 Token 用量。",
+      "status": "查看运行环境、版本、服务商和环境状态。",
+      "memory": "打开项目的 CLAUDE.md 记忆文件。",
+      "config": "打开设置和配置。",
+      "help": "显示命令文档和语法。"
+    },
+    "modalMeta": {
+      "helpEyebrow": "命令中心",
+      "helpTitle": "帮助与快捷键",
+      "helpSubtitle": "直接在对话中搜索内置命令、语法和使用方法。",
+      "modelsEyebrow": "模型选择",
+      "modelsTitle": "选择模型",
+      "modelsSubtitle": "选择此服务商要使用的模型。",
+      "costEyebrow": "会话用量",
+      "costTitle": "Token 用量",
+      "costSubtitle": "此会话的输入、输出和总 Token 数。",
+      "statusEyebrow": "运行状态",
+      "statusTitle": "系统状态",
+      "statusSubtitle": "集中查看版本、服务商、运行环境等信息。",
+      "commandResult": "命令结果"
+    },
+    "choiceSavedSession": "此选择已为当前会话保存，并将作为新对话的默认设置。",
+    "choiceSavedDefault": "此选择将作为新对话的默认模型。",
+    "tokensUsed_one": "已使用 {{count}} 个 Token",
+    "tokensUsed_other": "已使用 {{count}} 个 Token",
+    "compacted": "已压缩上下文",
+    "compactionSummary": "完整摘要",
+    "expandImage": "放大 {{name}}",
+    "tokensLabel_one": "Token",
+    "tokensLabel_other": "Token",
+    "escClosesModal": "按 Esc 关闭窗口。",
+    "close": "关闭"
+  },
+  "interactive": {
+    "title": "交互提示",
+    "waiting": "等待你在 CLI 中回复",
+    "instruction": "请在运行 Claude 的终端中选择一个选项。",
+    "selectedOption": "✓ Claude 已选择选项 {{number}}",
+    "instructionDetail": "在 CLI 中，可以使用方向键或输入编号来选择此选项。"
+  },
+  "toolStatus": {
+    "running": "运行中",
+    "completed": "已完成",
+    "error": "错误",
+    "denied": "已拒绝"
   }
 }

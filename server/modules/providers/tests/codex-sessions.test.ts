@@ -610,3 +610,25 @@ test('Codex history restores user prompts from typed item_completed rows', { con
     await rm(tempRoot, { recursive: true, force: true });
   }
 });
+
+test('Codex terminal originator maps its native transcript to the app session without duplicates', { concurrency: false }, async () => {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'codex-terminal-sync-'));
+  const workspacePath = path.join(tempRoot, 'workspace');
+  await mkdir(workspacePath, { recursive: true });
+  const restoreHomeDir = patchHomeDir(tempRoot);
+  try {
+    const transcript = await writeCodexTranscript(tempRoot, 'native-terminal-thread', workspacePath);
+    await writeFile(transcript, `${JSON.stringify({ type: 'session_meta', payload: {
+      id: 'native-terminal-thread', cwd: workspacePath, originator: 'cloudcli-terminal:terminal-app-id',
+    } })}\n`);
+    await withIsolatedDatabase(async () => {
+      sessionsDb.createAppSession('terminal-app-id', 'codex', workspacePath, 'Terminal session');
+      await new CodexSessionSynchronizer().synchronize();
+      assert.equal(sessionsDb.getSessionById('terminal-app-id')?.provider_session_id, 'native-terminal-thread');
+      assert.equal(sessionsDb.getSessionById('native-terminal-thread'), null);
+    });
+  } finally {
+    restoreHomeDir();
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+});

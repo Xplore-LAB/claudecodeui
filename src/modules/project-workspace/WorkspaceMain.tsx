@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, type Dispatch, type SetStateAction, useState } from 'react';
 
 import { ChatInterface } from '@/modules/chat';
+import { useUiPreferences } from '@/shared/context/UiPreferencesContext';
+
+import TerminalSessionWorkspace from '@/modules/project-workspace/TerminalSessionWorkspace';
 import { FileTree } from '@/modules/file-tree';
 import { StandaloneShell } from '@/modules/standalone-shell';
 import { GitPanel } from '@/modules/git-panel';
@@ -9,8 +12,8 @@ import { BrowserUsePanel, useBrowserUseEnabled } from '@/modules/browser-use';
 import { usePaletteOpsRegister } from '@/modules/command-palette';
 import { TaskMasterPanel, useTaskMasterProjectSync, useTasksSettings } from '@/modules/task-master';
 import type { AppTab, DirectoryRevealRequest, Project, ProjectSession, SessionEstablishedContext, SessionNavigationOptions, SettingsMainTab } from '@/shared/types';
-import { useUiPreferences } from '@/shared/context/UiPreferencesContext';
 import { useFileOpenResolver } from '@/modules/project-workspace/hooks/useFileOpenResolver';
+import { useTerminalSessionStatus } from '@/modules/project-workspace/hooks/useTerminalSessionStatus';
 import { EditorSidebar, useEditorSidebar } from '@/modules/code-editor';
 import WorkspaceHeader from '@/modules/project-workspace/WorkspaceHeader';
 import WorkspaceStateView from '@/modules/project-workspace/WorkspaceStateView';
@@ -47,23 +50,22 @@ function WorkspaceMain({
   setActiveTab,
   ws,
   sendMessage,
+  externalMessageUpdate,
+  newSessionTrigger,
   isMobile,
   onMenuClick,
   isLoading,
   onNavigateToSession,
   onSessionEstablished,
   onShowSettings,
-  externalMessageUpdate,
-  newSessionTrigger,
   onProjectSelect,
   onProjectsRefresh,
   onRenameSession,
 }: WorkspaceMainProps) {
-  const preferences = useUiPreferences();
-  const { showRawParameters, showThinking, sendByCtrlEnter } = preferences;
-
+  const { showRawParameters, showThinking, sendByCtrlEnter } = useUiPreferences();
   const { tasksEnabled, isTaskMasterInstalled } = useTasksSettings();
   const browserUseEnabled = useBrowserUseEnabled();
+  const terminalOwned = useTerminalSessionStatus(selectedSession?.id ?? null);
 
   useTaskMasterProjectSync(selectedProject);
   // The folder an in-chat `path/` reference asked to reveal. Held as an object
@@ -105,12 +107,8 @@ function WorkspaceMain({
     }
   }, [shouldShowBrowserTab, activeTab, setActiveTab]);
 
-  // Stable so React.memo(ChatInterface) can bail out: an inline arrow here made
-  // every WorkspaceMain render re-render the whole chat tree, including during
-  // an editor-divider drag.
-  const showAllTasks = useCallback(() => {
-    setActiveTab('tasks');
-  }, [setActiveTab]);
+  const showAllTasks = useCallback(() => setActiveTab('tasks'), [setActiveTab]);
+  const openTerminal = useCallback(() => setActiveTab('terminal'), [setActiveTab]);
 
   const openFile = useCallback((filePath: string) => {
     if (handleFileOpen(filePath)) {
@@ -175,6 +173,20 @@ function WorkspaceMain({
                 externalMessageUpdate={externalMessageUpdate}
                 newSessionTrigger={newSessionTrigger}
                 onShowAllTasks={tasksEnabled ? showAllTasks : null}
+                onOpenTerminal={openTerminal}
+                terminalOwned={terminalOwned}
+              />
+            </WorkspaceErrorBoundary>
+          </div>
+
+          <div className={`h-full ${activeTab === 'terminal' ? 'block' : 'hidden'}`}>
+            <WorkspaceErrorBoundary showDetails>
+              <TerminalSessionWorkspace
+                project={selectedProject}
+                session={selectedSession}
+                isActive={activeTab === 'terminal'}
+                onNavigateToSession={onNavigateToSession}
+                onSessionEstablished={onSessionEstablished}
               />
             </WorkspaceErrorBoundary>
           </div>
@@ -193,7 +205,7 @@ function WorkspaceMain({
             <div className="h-full w-full overflow-hidden">
               <StandaloneShell
                 project={selectedProject}
-                session={selectedSession}
+                isPlainShell
                 showHeader={false}
                 isActive={activeTab === 'shell'}
               />

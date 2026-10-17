@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { transcribeVoice } from '@/shared/api';
+import { useSystemDictation } from '@/modules/chat/hooks/useSystemDictation';
 import type { VoiceInputState } from '@/shared/types';
 
 // Mobile-safe recording: iOS Safari 18.4+ supports webm/opus; older iOS needs mp4.
@@ -32,7 +33,10 @@ function pickMime(): string {
 export function useVoiceInput(
   onTranscript: (text: string, send?: boolean) => void,
   onError?: (msg: string) => void,
+  serverAvailable = false,
 ) {
+  const system = useSystemDictation(onTranscript, onError);
+  // Reflects microphone capture and upload state for the configured server backend.
   const [state, setState] = useState<VoiceInputState>('idle');
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -145,5 +149,8 @@ export function useVoiceInput(
     else if (state === 'idle') start();
   }, [state, start, stop]);
 
-  return { state, toggle, stop };
+  const canRecord = Boolean(navigator.mediaDevices?.getUserMedia) && typeof MediaRecorder !== 'undefined';
+  // A delayed health response must not switch engines while dictation is active.
+  if (state === 'idle' && (system.native || !serverAvailable || !canRecord || system.state !== 'idle')) return system;
+  return { state, toggle, stop, available: true, preview: '' };
 }

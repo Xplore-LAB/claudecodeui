@@ -1,0 +1,10 @@
+[Unit]
+Description=Persistent CloudCLI agent terminals
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/tmux -D -L cloudcli -f /home/lab434/apps/cloudcli/config/terminal-tmux.conf
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

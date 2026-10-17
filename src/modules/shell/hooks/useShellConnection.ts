@@ -25,6 +25,7 @@ type UseShellConnectionOptions = {
   onProcessCompleteRef: MutableRefObject<((exitCode: number) => void) | null | undefined>;
   isInitialized: boolean;
   autoConnect: boolean;
+  persistent?: boolean;
   closeSocket: () => void;
   clearTerminalScreen: () => void;
   onOutputRef?: MutableRefObject<(() => void) | null>;
@@ -34,6 +35,7 @@ type UseShellConnectionResult = {
   isConnected: boolean;
   isConnecting: boolean;
   claudeLaunchColorScheme: 'light' | 'dark' | null;
+  attachCommand: string | null;
   closeSocket: () => void;
   connectToShell: (options?: { forceRestart?: boolean }) => void;
   disconnectFromShell: (options?: { suppressAutoConnect?: boolean }) => void;
@@ -52,6 +54,7 @@ export function useShellConnection({
   onProcessCompleteRef,
   isInitialized,
   autoConnect,
+  persistent = false,
   closeSocket,
   clearTerminalScreen,
   onOutputRef,
@@ -62,6 +65,10 @@ export function useShellConnection({
   // the server knows it: a reconnect can reattach to a CLI started in another
   // theme. Null when the pty runs anything else or no socket is open.
   const [claudeLaunchColorScheme, setClaudeLaunchColorScheme] = useState<'light' | 'dark' | null>(null);
+  // The server supplies the command that attaches a local terminal to this same process.
+  const [attachCommand, setAttachCommand] = useState<string | null>(null);
+  // Replace retained output only when this connection actually receives its replay.
+  const awaitingReplayRef = useRef(persistent);
   const connectingRef = useRef(false);
   const forceRestartOnInitRef = useRef(false);
   const suppressAutoConnectRef = useRef(false);
@@ -102,6 +109,10 @@ export function useShellConnection({
 
       if (message.type === 'output') {
         const output = typeof message.data === 'string' ? message.data : '';
+        if (output && awaitingReplayRef.current) {
+          clearTerminalScreen();
+          awaitingReplayRef.current = false;
+        }
         handleProcessCompletion(output);
         terminalRef.current?.write(output);
         onOutputRef?.current?.();
@@ -121,12 +132,17 @@ export function useShellConnection({
         return;
       }
 
+      if (message.type === 'terminal_session') {
+        setAttachCommand(typeof message.attachCommand === 'string' ? message.attachCommand : null);
+        return;
+      }
+
       if (message.type === 'claude_theme') {
         const { colorScheme } = message;
         setClaudeLaunchColorScheme(colorScheme === 'light' || colorScheme === 'dark' ? colorScheme : null);
       }
     },
-    [handleProcessCompletion, onOutputRef, terminalRef],
+    [clearTerminalScreen, handleProcessCompletion, onOutputRef, terminalRef],
   );
 
   const connectWebSocket = useCallback(
@@ -144,16 +160,19 @@ export function useShellConnection({
         }
 
         connectingRef.current = true;
+        awaitingReplayRef.current = persistent;
 
         const socket = new WebSocket(wsUrl);
         wsRef.current = socket;
 
         socket.onopen = () => {
+          if (wsRef.current !== socket) return;
           setIsConnected(true);
           setIsConnecting(false);
           connectingRef.current = false;
 
           window.setTimeout(() => {
+            if (wsRef.current !== socket || socket.readyState !== WebSocket.OPEN) return;
             const currentTerminal = terminalRef.current;
             const currentFitAddon = fitAddonRef.current;
             const currentProject = selectedProjectRef.current;
@@ -176,6 +195,7 @@ export function useShellConnection({
               initialCommand: initialCommandRef.current,
               isPlainShell: isPlainShellRef.current,
               forceRestart,
+              persistent,
               // Launch-time flag: bypass mode can only join the CLI's
               // shift+tab cycle when claude starts with it.
               bypassPermissions: bypassPermissionsRef.current,
@@ -186,19 +206,23 @@ export function useShellConnection({
         };
 
         socket.onmessage = (event) => {
+          if (wsRef.current !== socket) return;
           const rawPayload = typeof event.data === 'string' ? event.data : String(event.data ?? '');
           handleSocketMessage(rawPayload);
         };
 
         socket.onclose = () => {
+          if (wsRef.current !== socket) return;
           setIsConnected(false);
           setIsConnecting(false);
           setClaudeLaunchColorScheme(null);
           connectingRef.current = false;
-          clearTerminalScreen();
+          // A network interruption must leave the last visible output readable.
+          if (!persistent) clearTerminalScreen();
         };
 
         socket.onerror = () => {
+          if (wsRef.current !== socket) return;
           setIsConnected(false);
           setIsConnecting(false);
           connectingRef.current = false;
@@ -216,6 +240,7 @@ export function useShellConnection({
       fitAddonRef,
       handleSocketMessage,
       initialCommandRef,
+      persistent,
       isConnected,
       isConnecting,
       isDarkModeRef,
@@ -245,13 +270,14 @@ export function useShellConnection({
     }
 
     closeSocket();
-    clearTerminalScreen();
+    if (!persistent) clearTerminalScreen();
+    setAttachCommand(null);
     setIsConnected(false);
     setIsConnecting(false);
     setClaudeLaunchColorScheme(null);
     connectingRef.current = false;
     forceRestartOnInitRef.current = false;
-  }, [clearTerminalScreen, closeSocket]);
+  }, [clearTerminalScreen, closeSocket, persistent]);
 
   useEffect(() => {
     if (
@@ -264,13 +290,15 @@ export function useShellConnection({
       return;
     }
 
-    connectToShell();
+    const reconnectTimer = window.setTimeout(() => connectToShell(), 1000);
+    return () => window.clearTimeout(reconnectTimer);
   }, [autoConnect, connectToShell, isConnected, isConnecting, isInitialized]);
 
   return {
     isConnected,
     isConnecting,
     claudeLaunchColorScheme,
+    attachCommand,
     closeSocket,
     connectToShell,
     disconnectFromShell,

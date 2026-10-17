@@ -8,6 +8,7 @@ type ShellConnectionOverlayProps = {
   connectTitle: string;
   connectingLabel: string;
   onConnect: () => void;
+  compact?: boolean;
 };
 
 /** Rendered by Shell on top of the terminal to show connect/loading state until the shell session is live. */
@@ -19,7 +20,12 @@ export default function ShellConnectionOverlay({
   connectTitle,
   connectingLabel,
   onConnect,
+  compact = false,
 }: ShellConnectionOverlayProps) {
+  // Shared terminals retain their last output while offline; keep it available to read.
+  const containerClass = compact
+    ? 'absolute inset-x-2 bottom-2 z-20 flex items-center justify-center rounded-xl border border-border bg-card/95 p-3 shadow-lg'
+    : 'absolute inset-0 z-20 flex items-center justify-center bg-card/90 p-6';
   if (mode === 'loading') {
     return (
       <div className="absolute inset-0 z-20 flex items-center justify-center bg-card/90">
@@ -33,7 +39,7 @@ export default function ShellConnectionOverlay({
 
   if (mode === 'connect') {
     return (
-      <div className="absolute inset-0 z-20 flex items-center justify-center bg-card/90 p-6">
+      <div className={containerClass}>
         <div className="flex w-full max-w-md flex-col items-center gap-3 text-center">
           <button
             type="button"
@@ -51,7 +57,7 @@ export default function ShellConnectionOverlay({
   }
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-card/90 p-6">
+    <div className={containerClass}>
       <div className="flex w-full max-w-md flex-col items-center gap-3 text-center">
         <div className="flex items-center justify-center gap-3 text-yellow-700 dark:text-yellow-300">
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />

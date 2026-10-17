@@ -378,7 +378,9 @@ export function useShellTerminal({
       resizeTimeoutRef.current = window.setTimeout(() => {
         const currentFitAddon = fitAddonRef.current;
         const currentTerminal = terminalRef.current;
-        if (!currentFitAddon || !currentTerminal) {
+        // Hidden tabs have no usable geometry; resizing them can disrupt other devices.
+        if (!currentFitAddon || !currentTerminal ||
+            terminalContainer.clientWidth === 0 || terminalContainer.clientHeight === 0) {
           return;
         }
 

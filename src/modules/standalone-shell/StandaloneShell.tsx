@@ -12,6 +12,7 @@ type StandaloneShellProps = {
   isPlainShell?: boolean | null;
   isActive?: boolean;
   autoConnect?: boolean;
+  persistent?: boolean;
   onComplete?: ((exitCode: number) => void) | null;
   onClose?: (() => void) | null;
   title?: string | null;
@@ -29,6 +30,7 @@ export default function StandaloneShell({
   isPlainShell = null,
   isActive = true,
   autoConnect = true,
+  persistent = false,
   onComplete = null,
   onClose = null,
   title = null,
@@ -72,6 +74,7 @@ export default function StandaloneShell({
           onProcessComplete={handleProcessComplete}
           minimal={minimal}
           autoConnect={minimal ? true : autoConnect}
+          persistent={persistent}
         />
       </div>
     </div>

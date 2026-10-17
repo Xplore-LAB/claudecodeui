@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { BrainIcon, ChevronDownIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
@@ -132,14 +134,14 @@ export type ReasoningTriggerProps = {
   getThinkingMessage?: (isStreaming: boolean, duration?: number) => React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number): React.ReactNode => {
+const defaultGetThinkingMessage = (isStreaming: boolean, duration: number | undefined, t: TFunction): React.ReactNode => {
   if (isStreaming || duration === 0) {
-    return <Shimmer>Thinking...</Shimmer>;
+    return <Shimmer>{t('thinking.streaming', { defaultValue: 'Thinking...' })}</Shimmer>;
   }
   if (duration === undefined) {
-    return <p>Thought for a few seconds</p>;
+    return <p>{t('thinking.completed', { defaultValue: 'Thought for a few seconds' })}</p>;
   }
-  return <p>Thought for {duration} seconds</p>;
+  return <p>{t('thinking.duration', { duration, defaultValue: 'Thought for {{duration}} seconds' })}</p>;
 };
 
 /** Toggle of Reasoning, used by MessageComponent. */
@@ -147,9 +149,10 @@ export const ReasoningTrigger = React.memo<ReasoningTriggerProps>(
   ({
     className,
     children,
-    getThinkingMessage = defaultGetThinkingMessage,
+    getThinkingMessage,
     ...props
   }) => {
+    const { t } = useTranslation('chat');
     const { isStreaming, isOpen, duration } = useReasoning();
 
     return (
@@ -163,7 +166,7 @@ export const ReasoningTrigger = React.memo<ReasoningTriggerProps>(
         {children ?? (
           <>
             <BrainIcon className="h-4 w-4" />
-            {getThinkingMessage(isStreaming, duration)}
+            {getThinkingMessage ? getThinkingMessage(isStreaming, duration) : defaultGetThinkingMessage(isStreaming, duration, t)}
             <ChevronDownIcon
               className={cn(
                 'h-4 w-4 transition-transform',
